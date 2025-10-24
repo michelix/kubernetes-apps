@@ -22,7 +22,7 @@ data:
             href: "https://traefik.valentak.at/dashboard/"
             description: Reverse Proxy
         - Pihole:
-            icon: pihole
+            icon: pi-hole
             href: "https://pihole.valentak.at/admin/"
             description: DNS Ad Blocker
         - Ansible Semaphore:
