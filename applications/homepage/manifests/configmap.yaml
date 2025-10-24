@@ -68,124 +68,124 @@ data:
             href: "https://github.com/"
             description: Code Repository
         - Grep App:
-            icon: search.png
+            icon: search.svg
             href: "https://grep.app/"
             description: GitHub Code Search
         - Hoppscotch:
-            icon: api.png
+            icon: api.svg
             href: "https://hoppscotch.io/"
             description: API Development Tool
         - Regexr:
-            icon: regex.png
+            icon: regex.svg
             href: "https://regexr.com/"
             description: Regular Expression Tester
         - Tmate:
-            icon: terminal.png
+            icon: terminal.svg
             href: "https://tmate.io/"
             description: Terminal Sharing
         - Debian Handbook:
-            icon: debian.png
+            icon: debian.svg
             href: "https://debian-handbook.info/browse/stable/"
             description: Linux Documentation
         - Crontab Guru:
-            icon: cron.png
+            icon: cron.svg
             href: "https://crontab.guru/"
             description: Cron Schedule Editor
         - CyberChef:
-            icon: chef.png
+            icon: chef.svg
             href: "https://gchq.github.io/CyberChef/"
             description: Encryption & Encoding
         - SSL Labs Tester:
-            icon: ssl.png
+            icon: ssl.svg
             href: "https://www.ssllabs.com/ssltest/"
             description: SSL Certificate Checker
         - JSON Formatter:
-            icon: json.png
+            icon: json.svg
             href: "https://jsonformatter.org/"
             description: JSON Tools
         - JSFiddle:
-            icon: jsfiddle.png
+            icon: jsfiddle.svg
             href: "https://jsfiddle.net/"
             description: JavaScript Playground
         - Digital Ocean:
-            icon: digitalocean.png
+            icon: digitalocean.svg
             href: "https://cloud.digitalocean.com/"
             description: Cloud Services
         - HealthChecks.io:
-            icon: healthcheck.png
+            icon: healthcheck.svg
             href: "https://healthchecks.io/"
             description: Service Monitoring
     - Utilities:
         - Chroniker Timer:
-            icon: timer.png
+            icon: timer.svg
             href: "https://chroniker.co/"
             description: Productivity Timer
         - CopyChar:
-            icon: copy.png
+            icon: copy.svg
             href: "https://copychar.cc/"
             description: Symbol Search
         - DeepL:
-            icon: translate.png
+            icon: translate.svg
             href: "https://www.deepl.com/translator"
             description: Translator
         - Font Generator:
-            icon: font.png
+            icon: font.svg
             href: "https://www.fontgeneratoronline.com/"
             description: ASCII Font Generator
         - Time.Is:
-            icon: time.png
+            icon: time.svg
             href: "https://time.is/"
             description: World Clock
         - Torrent Parts:
-            icon: torrent.png
+            icon: torrent.svg
             href: "https://torrent.parts/"
             description: Torrent Inspector
         - Photo College:
-            icon: collage.png
+            icon: collage.svg
             href: "https://www.befunky.com/create/collage/"
             description: Photo Collage Maker
         - MD5 Hash:
-            icon: hash.png
+            icon: hash.svg
             href: "http://www.miraclesalad.com/webtools/md5.php"
             description: Hash Generator
         - GitHub Stars:
-            icon: github-stars.png
+            icon: github-stars.svg
             href: "https://seladb.github.io/StarTrack-js/"
             description: GitHub Star Tracker
         - Text Tools:
-            icon: text.png
+            icon: text.svg
             href: "https://pinetools.com/c-text-lists/"
             description: Text Processing
         - Online Text Tools:
-            icon: text-tools.png
+            icon: text-tools.svg
             href: "https://onlinetexttools.com/"
             description: Advanced Text Tools
         - Conversao:
-            icon: convert.png
+            icon: convert.svg
             href: "https://conversao.net/eng/"
             description: Unit Converter
         - Omni Calculators:
-            icon: calculator.png
+            icon: calculator.svg
             href: "https://www.omnicalculator.com/"
             description: Calculator Collection
         - Dr Meme:
-            icon: meme.png
+            icon: meme.svg
             href: "https://www.drmemes.com/"
             description: Meme Generator
         - ASCII Tree:
-            icon: tree.png
+            icon: tree.svg
             href: "https://ascii-tree-generator.com/"
             description: Directory Tree Generator
         - ASCII Diagram:
-            icon: diagram.png
+            icon: diagram.svg
             href: "https://ascii-tree-generator.com/"
             description: ASCII Diagram Drawer
         - Bullet Converter:
-            icon: bullet.png
+            icon: bullet.svg
             href: "https://listed.to/p/LxO8yHsB9E#bc"
             description: Bullet Point Converter
         - Lenny Face:
-            icon: lenny.png
+            icon: lenny.svg
             href: "https://www.fontspace.com/lenny-face"
             description: Lenny Face Generator
   widgets.yaml: |
@@ -204,12 +204,13 @@ data:
           cpu: true
           memory: true
           showLabel: true
-    - clock:
-        locale: en-GB
-        timezone: Europe/Vienna
-        format: en-GB
-        hideDate: false
+    - datetime:
+        locale: de
         text_size: xl
+        format:
+          dateStyle: long
+          timeStyle: short
+          hourCycle: h23
     - openmeteo:
         label: Dornbirn
         latitude: 47.4143
@@ -225,7 +226,9 @@ data:
     hostValidation: false
     theme: dark
     headerStyle: boxed
-    hideVersion: true
+    hideVersion: false
+    color: slate
+    useEqualHeights: true
     layout:
       "Home Services":
         tab: "Home Services"
