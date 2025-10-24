@@ -10,182 +10,178 @@ data:
   services.yaml: |
     - Home Services:
         - Sophos Firewall:
-            icon: sophos.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/sophos.svg
             href: https://sophos.valentak.at
             description: Firewall
         - Proxmox:
-            icon: proxmox.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/proxmox.svg
             href: https://pve2.valentak.at:8006/
             description: Virtualization
         - Traefik:
-            icon: traefik.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/traefik.svg
             href: "https://traefik.valentak.at/dashboard/"
             description: Reverse Proxy
         - Pihole:
-            icon: pihole.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/pihole.svg
             href: "https://pihole.valentak.at/admin/"
             description: DNS Ad Blocker
         - Ansible Semaphore:
-            icon: ansible.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/ansible.svg
             href: "https://ansible.valentak.at"
             description: Automation
-        - Librespeed:
-            icon: speedtest.svg
-            href: "https://librespeed.valentak.at"
-            description: Speed Test
         - Dockge:
-            icon: dockge.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/dockge.svg
             href: "https://dockge.valentak.at"
             description: Docker Compose Manager
         - TrueNas:
-            icon: truenas.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/truenas.svg
             href: "https://truenas.valentak.at"
             description: NAS Storage
     - Kubernetes Services:
         - Traefik:
-            icon: traefik.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/traefik.svg
             href: "https://traefik2.valentak.at"
             description: K8s Reverse Proxy
         - Pihole:
-            icon: pihole.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/pihole.svg
             href: "https://pihole2.valentak.at/admin/"
             description: K8s DNS Ad Blocker
         - ArgoCD:
-            icon: argo-cd.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/argo-cd.svg
             href: "https://argocd.valentak.at"
             description: GitOps
         - Gitea:
-            icon: gitea.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/gitea.svg
             href: "https://gitea.valentak.at"
             description: Git Server
     - Development Tools:
         - StackOverflow:
-            icon: stackoverflow.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/stackoverflow.svg
             href: "https://stackoverflow.com/"
             description: Q&A Platform
         - GitHub:
-            icon: github.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/github.svg
             href: "https://github.com/"
             description: Code Repository
         - Grep App:
-            icon: search.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/search.svg
             href: "https://grep.app/"
             description: GitHub Code Search
         - Hoppscotch:
-            icon: api.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/api.svg
             href: "https://hoppscotch.io/"
             description: API Development Tool
         - Regexr:
-            icon: regex.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/regex.svg
             href: "https://regexr.com/"
             description: Regular Expression Tester
         - Tmate:
-            icon: terminal.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/terminal.svg
             href: "https://tmate.io/"
             description: Terminal Sharing
         - Debian Handbook:
-            icon: debian.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/debian.svg
             href: "https://debian-handbook.info/browse/stable/"
             description: Linux Documentation
         - Crontab Guru:
-            icon: cron.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/cron.svg
             href: "https://crontab.guru/"
             description: Cron Schedule Editor
         - CyberChef:
-            icon: chef.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/chef.svg
             href: "https://gchq.github.io/CyberChef/"
             description: Encryption & Encoding
         - SSL Labs Tester:
-            icon: ssl.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/ssl.svg
             href: "https://www.ssllabs.com/ssltest/"
             description: SSL Certificate Checker
         - JSON Formatter:
-            icon: json.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/json.svg
             href: "https://jsonformatter.org/"
             description: JSON Tools
         - JSFiddle:
-            icon: jsfiddle.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/jsfiddle.svg
             href: "https://jsfiddle.net/"
             description: JavaScript Playground
         - Digital Ocean:
-            icon: digitalocean.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/digitalocean.svg
             href: "https://cloud.digitalocean.com/"
             description: Cloud Services
         - HealthChecks.io:
-            icon: healthcheck.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/healthcheck.svg
             href: "https://healthchecks.io/"
             description: Service Monitoring
     - Utilities:
         - Chroniker Timer:
-            icon: timer.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/timer.svg
             href: "https://chroniker.co/"
             description: Productivity Timer
         - CopyChar:
-            icon: copy.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/copy.svg
             href: "https://copychar.cc/"
             description: Symbol Search
         - DeepL:
-            icon: translate.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/translate.svg
             href: "https://www.deepl.com/translator"
             description: Translator
         - Font Generator:
-            icon: font.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/font.svg
             href: "https://www.fontgeneratoronline.com/"
             description: ASCII Font Generator
         - Time.Is:
-            icon: time.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/time.svg
             href: "https://time.is/"
             description: World Clock
         - Torrent Parts:
-            icon: torrent.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/torrent.svg
             href: "https://torrent.parts/"
             description: Torrent Inspector
         - Photo College:
-            icon: collage.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/collage.svg
             href: "https://www.befunky.com/create/collage/"
             description: Photo Collage Maker
         - MD5 Hash:
-            icon: hash.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/hash.svg
             href: "http://www.miraclesalad.com/webtools/md5.php"
             description: Hash Generator
         - GitHub Stars:
-            icon: github-stars.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/github-stars.svg
             href: "https://seladb.github.io/StarTrack-js/"
             description: GitHub Star Tracker
         - Text Tools:
-            icon: text.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/text.svg
             href: "https://pinetools.com/c-text-lists/"
             description: Text Processing
         - Online Text Tools:
-            icon: text-tools.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/text-tools.svg
             href: "https://onlinetexttools.com/"
             description: Advanced Text Tools
         - Conversao:
-            icon: convert.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/convert.svg
             href: "https://conversao.net/eng/"
             description: Unit Converter
         - Omni Calculators:
-            icon: calculator.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/calculator.svg
             href: "https://www.omnicalculator.com/"
             description: Calculator Collection
         - Dr Meme:
-            icon: meme.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/meme.svg
             href: "https://www.drmemes.com/"
             description: Meme Generator
         - ASCII Tree:
-            icon: tree.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/tree.svg
             href: "https://ascii-tree-generator.com/"
             description: Directory Tree Generator
         - ASCII Diagram:
-            icon: diagram.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/diagram.svg
             href: "https://ascii-tree-generator.com/"
             description: ASCII Diagram Drawer
         - Bullet Converter:
-            icon: bullet.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/bullet.svg
             href: "https://listed.to/p/LxO8yHsB9E#bc"
             description: Bullet Point Converter
         - Lenny Face:
-            icon: lenny.svg
+            icon: https://github.com/homarr-labs/dashboard-icons/raw/master/svg/lenny.svg
             href: "https://www.fontspace.com/lenny-face"
             description: Lenny Face Generator
   widgets.yaml: |
