@@ -9,13 +9,21 @@ applications/
 ├── homepage/                    # Homepage application
 │   ├── application.yaml        # ArgoCD Application definition
 │   └── manifests/              # Kubernetes manifests
-├── monitoring/                  # Monitoring stack
+│       ├── namespace.yaml      # Namespace definition
+│       ├── serviceaccount.yaml # Service account
+│       ├── clusterrole.yaml    # RBAC permissions
+│       ├── clusterrolebinding.yaml
+│       ├── configmap.yaml      # Application configuration
+│       ├── deployment.yaml     # Application deployment
+│       ├── service.yaml        # Service definition
+│       └── ingress.yaml        # Ingress configuration
+├── monitoring/                  # Monitoring stack (placeholder)
 │   ├── application.yaml
 │   └── manifests/
-├── ingress/                     # Ingress controller
+├── ingress/                     # Ingress controller (placeholder)
 │   ├── application.yaml
 │   └── manifests/
-└── secrets/                     # Secret management
+└── secrets/                     # Secret management (placeholder)
     ├── application.yaml
     └── manifests/
 ```
@@ -65,6 +73,18 @@ nano config
    - **Namespace**: `homepage`
 5. **Create**: Click "Create" button
 6. **Sync**: Click "Sync" button to deploy
+
+### Webhook Configuration
+
+For automatic syncing when changes are pushed:
+
+1. **In Gitea**: Go to your repository settings
+2. **Add Webhook**:
+   - **Target URL**: `http://argocd-server.argocd.svc.cluster.local/api/webhooks/homepage`
+   - **HTTP Method**: `POST`
+   - **Content Type**: `application/json`
+   - **Trigger On**: Push events
+3. **Save**: Click "Add Webhook"
 
 ### Application Configuration
 
