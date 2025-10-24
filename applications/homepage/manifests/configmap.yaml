@@ -10,61 +10,61 @@ data:
   services.yaml: |
     - Home Services:
         - Sophos Firewall:
-            icon: sophos.png
+            icon: sophos.svg
             href: https://sophos.valentak.at
             description: Firewall
         - Proxmox:
-            icon: proxmox.png
+            icon: proxmox.svg
             href: https://pve2.valentak.at:8006/
             description: Virtualization
         - Traefik:
-            icon: traefik.png
+            icon: traefik.svg
             href: "https://traefik.valentak.at/dashboard/"
             description: Reverse Proxy
         - Pihole:
-            icon: pihole.png
+            icon: pihole.svg
             href: "https://pihole.valentak.at/admin/"
             description: DNS Ad Blocker
         - Ansible Semaphore:
-            icon: ansible.png
+            icon: ansible.svg
             href: "https://ansible.valentak.at"
             description: Automation
         - Librespeed:
-            icon: speedtest.png
+            icon: speedtest.svg
             href: "https://librespeed.valentak.at"
             description: Speed Test
         - Dockge:
-            icon: dockge.png
+            icon: dockge.svg
             href: "https://dockge.valentak.at"
             description: Docker Compose Manager
         - TrueNas:
-            icon: truenas.png
+            icon: truenas.svg
             href: "https://truenas.valentak.at"
             description: NAS Storage
     - Kubernetes Services:
         - Traefik:
-            icon: traefik.png
+            icon: traefik.svg
             href: "https://traefik2.valentak.at"
             description: K8s Reverse Proxy
         - Pihole:
-            icon: pihole.png
+            icon: pihole.svg
             href: "https://pihole2.valentak.at/admin/"
             description: K8s DNS Ad Blocker
         - ArgoCD:
-            icon: argocd.png
+            icon: argo-cd.svg
             href: "https://argocd.valentak.at"
             description: GitOps
         - Gitea:
-            icon: gitea.png
+            icon: gitea.svg
             href: "https://gitea.valentak.at"
             description: Git Server
     - Development Tools:
         - StackOverflow:
-            icon: stackoverflow.png
+            icon: stackoverflow.svg
             href: "https://stackoverflow.com/"
             description: Q&A Platform
         - GitHub:
-            icon: github.png
+            icon: github.svg
             href: "https://github.com/"
             description: Code Repository
         - Grep App:
@@ -189,6 +189,9 @@ data:
             href: "https://www.fontspace.com/lenny-face"
             description: Lenny Face Generator
   widgets.yaml: |
+    - search:
+        provider: duckduckgo
+        target: _blank
     - kubernetes:
         cluster:
           show: true
@@ -207,9 +210,6 @@ data:
         format: en-GB
         hideDate: false
         text_size: xl
-    - search:
-        provider: duckduckgo
-        target: _blank
     - openmeteo:
         label: Dornbirn
         latitude: 47.4143
@@ -223,6 +223,26 @@ data:
       mode: cluster
     hostname: homepage.valentak.at
     hostValidation: false
+    theme: dark
+    headerStyle: boxed
+    hideVersion: true
+    layout:
+      "Home Services":
+        tab: "Home Services"
+        style: row
+        columns: 3
+      "Kubernetes Services":
+        tab: "Kubernetes Services"
+        style: row
+        columns: 3
+      "Development Tools":
+        tab: "Development Tools"
+        style: row
+        columns: 3
+      "Utilities":
+        tab: "Utilities"
+        style: row
+        columns: 3
   kubernetes.yaml: |
     mode: cluster
     server: https://kubernetes.default.svc
