@@ -27,6 +27,18 @@ data:
             href: "https://gitea.valentak.at"
             description: gitea
   widgets.yaml: |
+    - kubernetes:
+        cluster:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+          label: "cluster"
+        nodes:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
     - search:
         provider: duckduckgo
         target: _blank
@@ -56,14 +68,3 @@ data:
     token: /var/run/secrets/kubernetes.io/serviceaccount/token
     ca: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
     ingress: true
-    cluster:
-      show: true
-      cpu: true
-      memory: true
-      showLabel: true
-      label: "cluster"
-    nodes:
-      show: true
-      cpu: true
-      memory: true
-      showLabel: true
