@@ -55,6 +55,7 @@ data:
     server: https://kubernetes.default.svc
     token: /var/run/secrets/kubernetes.io/serviceaccount/token
     ca: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    ingress: true
     cluster:
       show: true
       cpu: true
