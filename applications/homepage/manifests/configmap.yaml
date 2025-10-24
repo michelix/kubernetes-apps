@@ -25,6 +25,10 @@ data:
             icon: pi-hole
             href: "https://pihole.valentak.at/admin/"
             description: DNS Ad Blocker
+        - Pihole2:
+            icon: pi-hole
+            href: "https://pihole2.valentak.at/admin/"
+            description: K8s DNS Ad Blocker
         - Ansible Semaphore:
             icon: ansible
             href: "https://ansible.valentak.at"
@@ -38,14 +42,6 @@ data:
             href: "https://truenas.valentak.at"
             description: NAS Storage
     - Kubernetes Services:
-        - Traefik:
-            icon: traefik
-            href: "https://traefik2.valentak.at"
-            description: K8s Reverse Proxy
-        - Pihole:
-            icon: pihole
-            href: "https://pihole2.valentak.at/admin/"
-            description: K8s DNS Ad Blocker
         - ArgoCD:
             icon: argo-cd
             href: "https://argocd.valentak.at"
