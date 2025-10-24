@@ -10,7 +10,7 @@ data:
   services.yaml: |
     - Home Services:
         - Sophos Firewall:
-            icon: firewall.png
+            icon: sophos.png
             href: https://sophos.valentak.at
             description: Firewall
         - Proxmox:
@@ -22,7 +22,7 @@ data:
             href: "https://traefik.valentak.at/dashboard/"
             description: Reverse Proxy
         - Pihole:
-            icon: pihole.png
+            icon: pihole
             href: "https://pihole.valentak.at/admin/"
             description: DNS Ad Blocker
         - Ansible Semaphore:
@@ -51,141 +51,141 @@ data:
             href: "https://pihole2.valentak.at/admin/"
             description: K8s DNS Ad Blocker
         - ArgoCD:
-            icon: argocd.png
+            icon: argocd
             href: "https://argocd.valentak.at"
             description: GitOps
         - Gitea:
             icon: gitea.png
             href: "https://gitea.valentak.at"
             description: Git Server
-    - Coding:
+    - Development Tools:
         - StackOverflow:
             icon: stackoverflow.png
             href: "https://stackoverflow.com/"
             description: Q&A Platform
         - GitHub:
-            icon: github.png
+            icon: github
             href: "https://github.com/"
             description: Code Repository
         - Grep App:
-            icon: search.png
+            icon: search
             href: "https://grep.app/"
             description: GitHub Code Search
         - Hoppscotch:
-            icon: api.png
+            icon: api
             href: "https://hoppscotch.io/"
             description: API Development Tool
         - Regexr:
-            icon: regex.png
+            icon: regex
             href: "https://regexr.com/"
             description: Regular Expression Tester
         - Tmate:
-            icon: terminal.png
+            icon: terminal
             href: "https://tmate.io/"
             description: Terminal Sharing
         - Debian Handbook:
-            icon: debian.png
+            icon: debian
             href: "https://debian-handbook.info/browse/stable/"
             description: Linux Documentation
         - Crontab Guru:
-            icon: cron.png
+            icon: cron
             href: "https://crontab.guru/"
             description: Cron Schedule Editor
         - CyberChef:
-            icon: chef.png
+            icon: chef
             href: "https://gchq.github.io/CyberChef/"
             description: Encryption & Encoding
         - SSL Labs Tester:
-            icon: ssl.png
+            icon: ssl
             href: "https://www.ssllabs.com/ssltest/"
             description: SSL Certificate Checker
         - JSON Formatter:
-            icon: json.png
+            icon: json
             href: "https://jsonformatter.org/"
             description: JSON Tools
         - JSFiddle:
-            icon: jsfiddle.png
+            icon: jsfiddle
             href: "https://jsfiddle.net/"
             description: JavaScript Playground
         - Digital Ocean:
-            icon: digitalocean.png
+            icon: digitalocean
             href: "https://cloud.digitalocean.com/"
             description: Cloud Services
         - HealthChecks.io:
-            icon: healthcheck.png
+            icon: healthcheck
             href: "https://healthchecks.io/"
             description: Service Monitoring
     - Utilities:
         - Chroniker Timer:
-            icon: timer.png
+            icon: timer
             href: "https://chroniker.co/"
             description: Productivity Timer
         - CopyChar:
-            icon: copy.png
+            icon: copy
             href: "https://copychar.cc/"
             description: Symbol Search
         - DeepL:
-            icon: translate.png
+            icon: translate
             href: "https://www.deepl.com/translator"
             description: Translator
         - Font Generator:
-            icon: font.png
+            icon: font
             href: "https://www.fontgeneratoronline.com/"
             description: ASCII Font Generator
         - Time.Is:
-            icon: time.png
+            icon: time
             href: "https://time.is/"
             description: World Clock
         - Torrent Parts:
-            icon: torrent.png
+            icon: torrent
             href: "https://torrent.parts/"
             description: Torrent Inspector
         - Photo College:
-            icon: collage.png
+            icon: collage
             href: "https://www.befunky.com/create/collage/"
             description: Photo Collage Maker
         - MD5 Hash:
-            icon: hash.png
+            icon: hash
             href: "http://www.miraclesalad.com/webtools/md5.php"
             description: Hash Generator
         - GitHub Stars:
-            icon: github-stars.png
+            icon: github-stars
             href: "https://seladb.github.io/StarTrack-js/"
             description: GitHub Star Tracker
         - Text Tools:
-            icon: text.png
+            icon: text
             href: "https://pinetools.com/c-text-lists/"
             description: Text Processing
         - Online Text Tools:
-            icon: text-tools.png
+            icon: text-tools
             href: "https://onlinetexttools.com/"
             description: Advanced Text Tools
         - Conversao:
-            icon: convert.png
+            icon: convert
             href: "https://conversao.net/eng/"
             description: Unit Converter
         - Omni Calculators:
-            icon: calculator.png
+            icon: calculator
             href: "https://www.omnicalculator.com/"
             description: Calculator Collection
         - Dr Meme:
-            icon: meme.png
+            icon: meme
             href: "https://www.drmemes.com/"
             description: Meme Generator
         - ASCII Tree:
-            icon: tree.png
+            icon: tree
             href: "https://ascii-tree-generator.com/"
             description: Directory Tree Generator
         - ASCII Diagram:
-            icon: diagram.png
+            icon: diagram
             href: "https://ascii-tree-generator.com/"
             description: ASCII Diagram Drawer
         - Bullet Converter:
-            icon: bullet.png
+            icon: bullet
             href: "https://listed.to/p/LxO8yHsB9E#bc"
             description: Bullet Point Converter
         - Lenny Face:
-            icon: lenny.png
+            icon: lenny
             href: "https://www.fontspace.com/lenny-face"
             description: Lenny Face Generator
   widgets.yaml: |
@@ -230,6 +230,16 @@ data:
       mode: cluster
     hostname: homepage.valentak.at
     hostValidation: false
+    layout: auto
+    theme: colorful
+    language: en
+    iconSize: medium
+    showStats: true
+    showGreeting: true
+    showTime: true
+    showDate: true
+    showWeather: true
+    showKubernetes: true
   kubernetes.yaml: |
     mode: cluster
     server: https://kubernetes.default.svc
