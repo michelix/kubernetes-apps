@@ -27,18 +27,6 @@ data:
             href: "https://gitea.valentak.at"
             description: gitea
   widgets.yaml: |
-    - kubernetes:
-        cluster:
-          show: true
-          cpu: true
-          memory: true
-          showLabel: true
-          label: "cluster"
-        nodes:
-          show: true
-          cpu: true
-          memory: true
-          showLabel: true
     - search:
         provider: duckduckgo
         target: _blank
@@ -60,20 +48,10 @@ data:
     title: Homelab
     kubernetes:
       mode: cluster
-      server: https://kubernetes.default.svc
-      token: /var/run/secrets/kubernetes.io/serviceaccount/token
-      ca: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
     hostname: homepage.valentak.at
     hostValidation: false
   kubernetes.yaml: |
-    cluster:
-      show: true
-      cpu: true
-      memory: true
-      showLabel: true
-      label: "cluster"
-    nodes:
-      show: true
-      cpu: true
-      memory: true
-      showLabel: true
+    mode: cluster
+    server: https://kubernetes.default.svc
+    token: /var/run/secrets/kubernetes.io/serviceaccount/token
+    ca: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
