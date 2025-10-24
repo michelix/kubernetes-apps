@@ -47,7 +47,7 @@ data:
             href: "https://pihole2.valentak.at/admin/"
             description: K8s DNS Ad Blocker
         - ArgoCD:
-            icon: argocd
+            icon: argo-cd
             href: "https://argocd.valentak.at"
             description: GitOps
         - Gitea:
@@ -56,7 +56,7 @@ data:
             description: Git Server
     - Development Tools:
         - StackOverflow:
-            icon: stackoverflow
+            icon: openstack
             href: "https://stackoverflow.com/"
             description: Q&A Platform
         - GitHub:
@@ -133,7 +133,7 @@ data:
             href: "https://torrent.parts/"
             description: Torrent Inspector
         - Photo College:
-            icon: collage
+            icon: synology-photos
             href: "https://www.befunky.com/create/collage/"
             description: Photo Collage Maker
         - MD5 Hash:
@@ -157,29 +157,33 @@ data:
             href: "https://conversao.net/eng/"
             description: Unit Converter
         - Omni Calculators:
-            icon: calculator
+            icon: assetgrid
             href: "https://www.omnicalculator.com/"
             description: Calculator Collection
         - Dr Meme:
-            icon: meme
+            icon: genius
             href: "https://www.drmemes.com/"
             description: Meme Generator
         - ASCII Tree:
-            icon: tree
+            icon: inventree
             href: "https://ascii-tree-generator.com/"
             description: Directory Tree Generator
         - ASCII Diagram:
-            icon: diagram
+            icon: asciinema
             href: "https://ascii-tree-generator.com/"
             description: ASCII Diagram Drawer
         - Bullet Converter:
-            icon: bullet
+            icon: google-fonts
             href: "https://listed.to/p/LxO8yHsB9E#bc"
             description: Bullet Point Converter
         - Lenny Face:
-            icon: lenny
+            icon: dashboard-icons
             href: "https://www.fontspace.com/lenny-face"
             description: Lenny Face Generator
+        - Dashboard Icons:
+            icon: dashboard-icons
+            href: "https://dashboardicons.com/"
+            description: Dashboard Icons
   widgets.yaml: |
     - search:
         provider: duckduckgo
