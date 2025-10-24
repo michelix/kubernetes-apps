@@ -41,6 +41,7 @@ sed -i "s|YOUR_HOMEPAGE_TITLE|${HOMEPAGE_TITLE}|g" applications/homepage/manifes
 
 # Update homepage deployment
 sed -i "s|YOUR_HOMEPAGE_HOSTNAME|${HOMEPAGE_HOSTNAME}|g" applications/homepage/manifests/deployment.yaml
+sed -i "s|YOUR_HOMEPAGE_ALLOWED_HOSTS|${HOMEPAGE_ALLOWED_HOSTS}|g" applications/homepage/manifests/deployment.yaml
 
 # Update homepage ingress
 sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/homepage/manifests/ingress.yaml

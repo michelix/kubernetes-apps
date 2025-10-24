@@ -30,6 +30,8 @@ spec:
           env:
             - name: HOMEPAGE_HOSTNAME
               value: "homepage.valentak.at"
+            - name: HOMEPAGE_ALLOWED_HOSTS
+              value: "homepage.valentak.at"
           resources:
             requests:
               memory: 128Mi

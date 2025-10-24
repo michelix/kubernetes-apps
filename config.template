@@ -19,3 +19,4 @@ GITEA_URL=https://gitea.${DOMAIN}
 # Homepage Configuration
 HOMEPAGE_HOSTNAME=homepage.${DOMAIN}
 HOMEPAGE_TITLE=Homelab
+HOMEPAGE_ALLOWED_HOSTS=homepage.${DOMAIN}
