@@ -20,6 +20,32 @@ applications/
     └── manifests/
 ```
 
+## 🔧 Configuration
+
+### 1. Configure Your Environment
+
+```bash
+# Run the configuration script
+./configure.sh
+
+# Edit the generated config file with your values
+nano config
+```
+
+**Required Configuration:**
+- `DOMAIN`: Your domain name (e.g., example.com)
+- `LOCATION`: Your city name
+- `LATITUDE`: Your latitude
+- `LONGITUDE`: Your longitude
+- `TIMEZONE`: Your timezone
+
+### 2. Apply Configuration
+
+```bash
+# Run the script again to apply your configuration
+./configure.sh
+```
+
 ## 🚀 ArgoCD Setup
 
 ### Using ArgoCD GUI
