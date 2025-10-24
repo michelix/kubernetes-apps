@@ -8,24 +8,186 @@ metadata:
     app.kubernetes.io/part-of: homelab
 data:
   services.yaml: |
-    - Hypervisor:
+    - Home Services:
+        - Sophos Firewall:
+            icon: firewall.png
+            href: https://sophos.YOUR_DOMAIN
+            description: Firewall
         - Proxmox:
             icon: proxmox.png
-            href: https://valentak.at:8006/
-            description: pve
-    - Proxy:
+            href: https://pve2.YOUR_DOMAIN:8006/
+            description: Virtualization
         - Traefik:
             icon: traefik.png
-            href: "https://traefik.valentak.at/dashboard/"
-            description: traefik
+            href: "https://traefik.YOUR_DOMAIN/dashboard/"
+            description: Reverse Proxy
+        - Pihole:
+            icon: pihole.png
+            href: "https://pihole.YOUR_DOMAIN/admin/"
+            description: DNS Ad Blocker
+        - Ansible Semaphore:
+            icon: ansible.png
+            href: "https://ansible.YOUR_DOMAIN"
+            description: Automation
+        - Librespeed:
+            icon: speedtest.png
+            href: "https://librespeed.YOUR_DOMAIN"
+            description: Speed Test
+        - Dockge:
+            icon: dockge.png
+            href: "https://dockge.YOUR_DOMAIN"
+            description: Docker Compose Manager
+        - TrueNas:
+            icon: truenas.png
+            href: "https://truenas.YOUR_DOMAIN"
+            description: NAS Storage
+    - Kubernetes Services:
+        - Traefik:
+            icon: traefik.png
+            href: "https://traefik2.YOUR_DOMAIN"
+            description: K8s Reverse Proxy
+        - Pihole:
+            icon: pihole.png
+            href: "https://pihole2.YOUR_DOMAIN/admin/"
+            description: K8s DNS Ad Blocker
         - ArgoCD:
             icon: argocd.png
-            href: "https://argocd.valentak.at"
-            description: argocd
+            href: "https://argocd.YOUR_DOMAIN"
+            description: GitOps
         - Gitea:
             icon: gitea.png
-            href: "https://gitea.valentak.at"
-            description: gitea
+            href: "https://gitea.YOUR_DOMAIN"
+            description: Git Server
+    - Coding:
+        - StackOverflow:
+            icon: stackoverflow.png
+            href: "https://stackoverflow.com/"
+            description: Q&A Platform
+        - GitHub:
+            icon: github.png
+            href: "https://github.com/"
+            description: Code Repository
+        - Grep App:
+            icon: search.png
+            href: "https://grep.app/"
+            description: GitHub Code Search
+        - Hoppscotch:
+            icon: api.png
+            href: "https://hoppscotch.io/"
+            description: API Development Tool
+        - Regexr:
+            icon: regex.png
+            href: "https://regexr.com/"
+            description: Regular Expression Tester
+        - Tmate:
+            icon: terminal.png
+            href: "https://tmate.io/"
+            description: Terminal Sharing
+        - Debian Handbook:
+            icon: debian.png
+            href: "https://debian-handbook.info/browse/stable/"
+            description: Linux Documentation
+        - Crontab Guru:
+            icon: cron.png
+            href: "https://crontab.guru/"
+            description: Cron Schedule Editor
+        - CyberChef:
+            icon: chef.png
+            href: "https://gchq.github.io/CyberChef/"
+            description: Encryption & Encoding
+        - SSL Labs Tester:
+            icon: ssl.png
+            href: "https://www.ssllabs.com/ssltest/"
+            description: SSL Certificate Checker
+        - JSON Formatter:
+            icon: json.png
+            href: "https://jsonformatter.org/"
+            description: JSON Tools
+        - JSFiddle:
+            icon: jsfiddle.png
+            href: "https://jsfiddle.net/"
+            description: JavaScript Playground
+        - Digital Ocean:
+            icon: digitalocean.png
+            href: "https://cloud.digitalocean.com/"
+            description: Cloud Services
+        - HealthChecks.io:
+            icon: healthcheck.png
+            href: "https://healthchecks.io/"
+            description: Service Monitoring
+    - Utilities:
+        - Chroniker Timer:
+            icon: timer.png
+            href: "https://chroniker.co/"
+            description: Productivity Timer
+        - CopyChar:
+            icon: copy.png
+            href: "https://copychar.cc/"
+            description: Symbol Search
+        - DeepL:
+            icon: translate.png
+            href: "https://www.deepl.com/translator"
+            description: Translator
+        - Font Generator:
+            icon: font.png
+            href: "https://www.fontgeneratoronline.com/"
+            description: ASCII Font Generator
+        - Time.Is:
+            icon: time.png
+            href: "https://time.is/"
+            description: World Clock
+        - Torrent Parts:
+            icon: torrent.png
+            href: "https://torrent.parts/"
+            description: Torrent Inspector
+        - Photo College:
+            icon: collage.png
+            href: "https://www.befunky.com/create/collage/"
+            description: Photo Collage Maker
+        - MD5 Hash:
+            icon: hash.png
+            href: "http://www.miraclesalad.com/webtools/md5.php"
+            description: Hash Generator
+        - GitHub Stars:
+            icon: github-stars.png
+            href: "https://seladb.github.io/StarTrack-js/"
+            description: GitHub Star Tracker
+        - Text Tools:
+            icon: text.png
+            href: "https://pinetools.com/c-text-lists/"
+            description: Text Processing
+        - Online Text Tools:
+            icon: text-tools.png
+            href: "https://onlinetexttools.com/"
+            description: Advanced Text Tools
+        - Conversao:
+            icon: convert.png
+            href: "https://conversao.net/eng/"
+            description: Unit Converter
+        - Omni Calculators:
+            icon: calculator.png
+            href: "https://www.omnicalculator.com/"
+            description: Calculator Collection
+        - Dr Meme:
+            icon: meme.png
+            href: "https://www.drmemes.com/"
+            description: Meme Generator
+        - ASCII Tree:
+            icon: tree.png
+            href: "https://ascii-tree-generator.com/"
+            description: Directory Tree Generator
+        - ASCII Diagram:
+            icon: diagram.png
+            href: "https://ascii-tree-generator.com/"
+            description: ASCII Diagram Drawer
+        - Bullet Converter:
+            icon: bullet.png
+            href: "https://listed.to/p/LxO8yHsB9E#bc"
+            description: Bullet Point Converter
+        - Lenny Face:
+            icon: lenny.png
+            href: "https://www.fontspace.com/lenny-face"
+            description: Lenny Face Generator
   widgets.yaml: |
     - kubernetes:
         cluster:
@@ -39,6 +201,12 @@ data:
           cpu: true
           memory: true
           showLabel: true
+    - clock:
+        locale: en-GB
+        timezone: Europe/Vienna
+        format: en-GB
+        hideDate: false
+        text_size: xl
     - search:
         provider: duckduckgo
         target: _blank
@@ -57,7 +225,7 @@ data:
         units: metric
         cache: 5
   settings.yaml: |
-    title: Homelab
+    title: Home Lab
     kubernetes:
       mode: cluster
     hostname: homepage.valentak.at
