@@ -15,7 +15,7 @@ metadata:
 spec:
   ingressClassName: cilium
   rules:
-    - host: homepage.YOUR_DOMAIN
+    - host: homepage.valentak.at
       http:
         paths:
           - path: /

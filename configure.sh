@@ -31,14 +31,14 @@ source config
 echo "🔧 Updating configuration files with your values..."
 
 # Update homepage configmap
-sed -i "s/YOUR_DOMAIN/${DOMAIN}/g" applications/homepage/manifests/configmap.yaml
-sed -i "s/YOUR_LOCATION/${LOCATION}/g" applications/homepage/manifests/configmap.yaml
-sed -i "s/YOUR_LATITUDE/${LATITUDE}/g" applications/homepage/manifests/configmap.yaml
-sed -i "s/YOUR_LONGITUDE/${LONGITUDE}/g" applications/homepage/manifests/configmap.yaml
-sed -i "s/YOUR_TIMEZONE/${TIMEZONE}/g" applications/homepage/manifests/configmap.yaml
+sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/homepage/manifests/configmap.yaml
+sed -i "s|YOUR_LOCATION|${LOCATION}|g" applications/homepage/manifests/configmap.yaml
+sed -i "s|YOUR_LATITUDE|${LATITUDE}|g" applications/homepage/manifests/configmap.yaml
+sed -i "s|YOUR_LONGITUDE|${LONGITUDE}|g" applications/homepage/manifests/configmap.yaml
+sed -i "s|YOUR_TIMEZONE|${TIMEZONE}|g" applications/homepage/manifests/configmap.yaml
 
 # Update homepage ingress
-sed -i "s/YOUR_DOMAIN/${DOMAIN}/g" applications/homepage/manifests/ingress.yaml
+sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/homepage/manifests/ingress.yaml
 
 echo "✅ Configuration updated successfully!"
 echo ""

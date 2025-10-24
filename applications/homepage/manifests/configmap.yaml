@@ -11,20 +11,20 @@ data:
     - Hypervisor:
         - Proxmox:
             icon: proxmox.png
-            href: https://YOUR_DOMAIN:8006/
+            href: https://valentak.at:8006/
             description: pve
     - Proxy:
         - Traefik:
             icon: traefik.png
-            href: "https://traefik.YOUR_DOMAIN/dashboard/"
+            href: "https://traefik.valentak.at/dashboard/"
             description: traefik
         - ArgoCD:
             icon: argocd.png
-            href: "https://argocd.YOUR_DOMAIN"
+            href: "https://argocd.valentak.at"
             description: argocd
         - Gitea:
             icon: gitea.png
-            href: "https://gitea.YOUR_DOMAIN"
+            href: "https://gitea.valentak.at"
             description: gitea
   widgets.yaml: |
     - kubernetes:
@@ -50,10 +50,10 @@ data:
           timeStyle: short
           hourCycle: h23
     - openmeteo:
-        label: YOUR_LOCATION
-        latitude: YOUR_LATITUDE
-        longitude: YOUR_LONGITUDE
-        timezone: YOUR_TIMEZONE
+        label: Dornbirn
+        latitude: 47.4143
+        longitude: 9.7419
+        timezone: Europe/Berlin
         units: metric
         cache: 5
   settings.yaml: |

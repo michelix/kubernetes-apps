@@ -25,7 +25,7 @@ applications/
 ### 1. Configure Your Environment
 
 ```bash
-# Run the configuration script
+# Run the configuration script to create your config file
 ./configure.sh
 
 # Edit the generated config file with your values
@@ -45,6 +45,8 @@ nano config
 # Run the script again to apply your configuration
 ./configure.sh
 ```
+
+**Note:** The `config` file is automatically excluded from Git commits to protect your personal information.
 
 ## 🚀 ArgoCD Setup
 
