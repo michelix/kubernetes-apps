@@ -61,5 +61,19 @@ data:
     kubernetes:
       mode: cluster
       server: https://kubernetes.default.svc
+      token: /var/run/secrets/kubernetes.io/serviceaccount/token
+      ca: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
     hostname: homepage.valentak.at
     hostValidation: false
+  kubernetes.yaml: |
+    cluster:
+      show: true
+      cpu: true
+      memory: true
+      showLabel: true
+      label: "cluster"
+    nodes:
+      show: true
+      cpu: true
+      memory: true
+      showLabel: true
