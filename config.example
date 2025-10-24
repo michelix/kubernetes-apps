@@ -1,0 +1,21 @@
+# Environment Configuration Template
+# Copy this file to config and update with your values
+
+# Domain Configuration
+DOMAIN=your-domain.com
+
+# Location Configuration (for weather widget)
+LOCATION=Your City
+LATITUDE=0.0
+LONGITUDE=0.0
+TIMEZONE=Europe/Berlin
+
+# Service URLs
+PROXMOX_URL=https://pve.${DOMAIN}:8006/
+TRAEFIK_URL=https://traefik.${DOMAIN}/dashboard/
+ARGOCD_URL=https://argocd.${DOMAIN}
+GITEA_URL=https://gitea.${DOMAIN}
+
+# ArgoCD Configuration
+ARGOCD_NAMESPACE=argocd
+ARGOCD_SERVER=https://kubernetes.default.svc

@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage
+  namespace: homepage
+  labels:
+    app.kubernetes.io/name: homepage
+    app.kubernetes.io/part-of: homelab
+data:
+  services.yaml: |
+    - Hypervisor:
+        - Proxmox:
+            icon: proxmox.png
+            href: https://YOUR_DOMAIN:8006/
+            description: pve
+    - Proxy:
+        - Traefik:
+            icon: traefik.png
+            href: "https://traefik.YOUR_DOMAIN/dashboard/"
+            description: traefik
+        - ArgoCD:
+            icon: argocd.png
+            href: "https://argocd.YOUR_DOMAIN"
+            description: argocd
+        - Gitea:
+            icon: gitea.png
+            href: "https://gitea.YOUR_DOMAIN"
+            description: gitea
+  widgets.yaml: |
+    - kubernetes:
+        cluster:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+          label: "cluster"
+        nodes:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+    - search:
+        provider: duckduckgo
+        target: _blank
+    - datetime:
+        locale: de
+        text_size: xl
+        format:
+          dateStyle: long
+          timeStyle: short
+          hourCycle: h23
+    - openmeteo:
+        label: YOUR_LOCATION
+        latitude: YOUR_LATITUDE
+        longitude: YOUR_LONGITUDE
+        timezone: YOUR_TIMEZONE
+        units: metric
+        cache: 5
+  settings.yaml: |
+    title: Homelab
+    kubernetes:
+      mode: cluster
