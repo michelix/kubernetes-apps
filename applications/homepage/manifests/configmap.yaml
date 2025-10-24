@@ -60,5 +60,6 @@ data:
     title: Homelab
     kubernetes:
       mode: cluster
+      server: https://kubernetes.default.svc
     hostname: homepage.valentak.at
     hostValidation: false
