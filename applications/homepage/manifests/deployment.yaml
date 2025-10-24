@@ -27,6 +27,9 @@ spec:
         - name: homepage
           image: ghcr.io/gethomepage/homepage:latest
           imagePullPolicy: Always
+          env:
+            - name: HOMEPAGE_HOSTNAME
+              value: "homepage.valentak.at"
           resources:
             requests:
               memory: 128Mi

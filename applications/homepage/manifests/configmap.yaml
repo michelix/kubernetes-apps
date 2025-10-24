@@ -60,3 +60,5 @@ data:
     title: Homelab
     kubernetes:
       mode: cluster
+    hostname: homepage.valentak.at
+    hostValidation: false

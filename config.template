@@ -15,3 +15,7 @@ PROXMOX_URL=https://pve.${DOMAIN}:8006/
 TRAEFIK_URL=https://traefik.${DOMAIN}/dashboard/
 ARGOCD_URL=https://argocd.${DOMAIN}
 GITEA_URL=https://gitea.${DOMAIN}
+
+# Homepage Configuration
+HOMEPAGE_HOSTNAME=homepage.${DOMAIN}
+HOMEPAGE_TITLE=Homelab
