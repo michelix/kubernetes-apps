@@ -22,7 +22,7 @@ data:
             href: "https://traefik.valentak.at/dashboard/"
             description: Reverse Proxy
         - Pihole:
-            icon: pihole
+            icon: pihole.png
             href: "https://pihole.valentak.at/admin/"
             description: DNS Ad Blocker
         - Ansible Semaphore:
@@ -51,7 +51,7 @@ data:
             href: "https://pihole2.valentak.at/admin/"
             description: K8s DNS Ad Blocker
         - ArgoCD:
-            icon: argocd
+            icon: argocd.png
             href: "https://argocd.valentak.at"
             description: GitOps
         - Gitea:
@@ -64,128 +64,128 @@ data:
             href: "https://stackoverflow.com/"
             description: Q&A Platform
         - GitHub:
-            icon: github
+            icon: github.png
             href: "https://github.com/"
             description: Code Repository
         - Grep App:
-            icon: search
+            icon: search.png
             href: "https://grep.app/"
             description: GitHub Code Search
         - Hoppscotch:
-            icon: api
+            icon: api.png
             href: "https://hoppscotch.io/"
             description: API Development Tool
         - Regexr:
-            icon: regex
+            icon: regex.png
             href: "https://regexr.com/"
             description: Regular Expression Tester
         - Tmate:
-            icon: terminal
+            icon: terminal.png
             href: "https://tmate.io/"
             description: Terminal Sharing
         - Debian Handbook:
-            icon: debian
+            icon: debian.png
             href: "https://debian-handbook.info/browse/stable/"
             description: Linux Documentation
         - Crontab Guru:
-            icon: cron
+            icon: cron.png
             href: "https://crontab.guru/"
             description: Cron Schedule Editor
         - CyberChef:
-            icon: chef
+            icon: chef.png
             href: "https://gchq.github.io/CyberChef/"
             description: Encryption & Encoding
         - SSL Labs Tester:
-            icon: ssl
+            icon: ssl.png
             href: "https://www.ssllabs.com/ssltest/"
             description: SSL Certificate Checker
         - JSON Formatter:
-            icon: json
+            icon: json.png
             href: "https://jsonformatter.org/"
             description: JSON Tools
         - JSFiddle:
-            icon: jsfiddle
+            icon: jsfiddle.png
             href: "https://jsfiddle.net/"
             description: JavaScript Playground
         - Digital Ocean:
-            icon: digitalocean
+            icon: digitalocean.png
             href: "https://cloud.digitalocean.com/"
             description: Cloud Services
         - HealthChecks.io:
-            icon: healthcheck
+            icon: healthcheck.png
             href: "https://healthchecks.io/"
             description: Service Monitoring
     - Utilities:
         - Chroniker Timer:
-            icon: timer
+            icon: timer.png
             href: "https://chroniker.co/"
             description: Productivity Timer
         - CopyChar:
-            icon: copy
+            icon: copy.png
             href: "https://copychar.cc/"
             description: Symbol Search
         - DeepL:
-            icon: translate
+            icon: translate.png
             href: "https://www.deepl.com/translator"
             description: Translator
         - Font Generator:
-            icon: font
+            icon: font.png
             href: "https://www.fontgeneratoronline.com/"
             description: ASCII Font Generator
         - Time.Is:
-            icon: time
+            icon: time.png
             href: "https://time.is/"
             description: World Clock
         - Torrent Parts:
-            icon: torrent
+            icon: torrent.png
             href: "https://torrent.parts/"
             description: Torrent Inspector
         - Photo College:
-            icon: collage
+            icon: collage.png
             href: "https://www.befunky.com/create/collage/"
             description: Photo Collage Maker
         - MD5 Hash:
-            icon: hash
+            icon: hash.png
             href: "http://www.miraclesalad.com/webtools/md5.php"
             description: Hash Generator
         - GitHub Stars:
-            icon: github-stars
+            icon: github-stars.png
             href: "https://seladb.github.io/StarTrack-js/"
             description: GitHub Star Tracker
         - Text Tools:
-            icon: text
+            icon: text.png
             href: "https://pinetools.com/c-text-lists/"
             description: Text Processing
         - Online Text Tools:
-            icon: text-tools
+            icon: text-tools.png
             href: "https://onlinetexttools.com/"
             description: Advanced Text Tools
         - Conversao:
-            icon: convert
+            icon: convert.png
             href: "https://conversao.net/eng/"
             description: Unit Converter
         - Omni Calculators:
-            icon: calculator
+            icon: calculator.png
             href: "https://www.omnicalculator.com/"
             description: Calculator Collection
         - Dr Meme:
-            icon: meme
+            icon: meme.png
             href: "https://www.drmemes.com/"
             description: Meme Generator
         - ASCII Tree:
-            icon: tree
+            icon: tree.png
             href: "https://ascii-tree-generator.com/"
             description: Directory Tree Generator
         - ASCII Diagram:
-            icon: diagram
+            icon: diagram.png
             href: "https://ascii-tree-generator.com/"
             description: ASCII Diagram Drawer
         - Bullet Converter:
-            icon: bullet
+            icon: bullet.png
             href: "https://listed.to/p/LxO8yHsB9E#bc"
             description: Bullet Point Converter
         - Lenny Face:
-            icon: lenny
+            icon: lenny.png
             href: "https://www.fontspace.com/lenny-face"
             description: Lenny Face Generator
   widgets.yaml: |
@@ -210,13 +210,6 @@ data:
     - search:
         provider: duckduckgo
         target: _blank
-    - datetime:
-        locale: de
-        text_size: xl
-        format:
-          dateStyle: long
-          timeStyle: short
-          hourCycle: h23
     - openmeteo:
         label: Dornbirn
         latitude: 47.4143
@@ -230,16 +223,6 @@ data:
       mode: cluster
     hostname: homepage.valentak.at
     hostValidation: false
-    layout: auto
-    theme: colorful
-    language: en
-    iconSize: medium
-    showStats: true
-    showGreeting: true
-    showTime: true
-    showDate: true
-    showWeather: true
-    showKubernetes: true
   kubernetes.yaml: |
     mode: cluster
     server: https://kubernetes.default.svc
