@@ -11,52 +11,52 @@ data:
     - Home Services:
         - Sophos Firewall:
             icon: firewall.png
-            href: https://sophos.YOUR_DOMAIN
+            href: https://sophos.valentak.at
             description: Firewall
         - Proxmox:
             icon: proxmox.png
-            href: https://pve2.YOUR_DOMAIN:8006/
+            href: https://pve2.valentak.at:8006/
             description: Virtualization
         - Traefik:
             icon: traefik.png
-            href: "https://traefik.YOUR_DOMAIN/dashboard/"
+            href: "https://traefik.valentak.at/dashboard/"
             description: Reverse Proxy
         - Pihole:
             icon: pihole.png
-            href: "https://pihole.YOUR_DOMAIN/admin/"
+            href: "https://pihole.valentak.at/admin/"
             description: DNS Ad Blocker
         - Ansible Semaphore:
             icon: ansible.png
-            href: "https://ansible.YOUR_DOMAIN"
+            href: "https://ansible.valentak.at"
             description: Automation
         - Librespeed:
             icon: speedtest.png
-            href: "https://librespeed.YOUR_DOMAIN"
+            href: "https://librespeed.valentak.at"
             description: Speed Test
         - Dockge:
             icon: dockge.png
-            href: "https://dockge.YOUR_DOMAIN"
+            href: "https://dockge.valentak.at"
             description: Docker Compose Manager
         - TrueNas:
             icon: truenas.png
-            href: "https://truenas.YOUR_DOMAIN"
+            href: "https://truenas.valentak.at"
             description: NAS Storage
     - Kubernetes Services:
         - Traefik:
             icon: traefik.png
-            href: "https://traefik2.YOUR_DOMAIN"
+            href: "https://traefik2.valentak.at"
             description: K8s Reverse Proxy
         - Pihole:
             icon: pihole.png
-            href: "https://pihole2.YOUR_DOMAIN/admin/"
+            href: "https://pihole2.valentak.at/admin/"
             description: K8s DNS Ad Blocker
         - ArgoCD:
             icon: argocd.png
-            href: "https://argocd.YOUR_DOMAIN"
+            href: "https://argocd.valentak.at"
             description: GitOps
         - Gitea:
             icon: gitea.png
-            href: "https://gitea.YOUR_DOMAIN"
+            href: "https://gitea.valentak.at"
             description: Git Server
     - Coding:
         - StackOverflow:
