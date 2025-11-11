@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terminal-backend
+  namespace: terminal
+  labels:
+    app: terminal-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: terminal-backend
+  template:
+    metadata:
+      labels:
+        app: terminal-backend
+    spec:
+      containers:
+      - name: backend
+        image: YOUR_REGISTRY/terminal-backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://terminal_user:terminal_pass@postgres:5432/terminal_db"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
