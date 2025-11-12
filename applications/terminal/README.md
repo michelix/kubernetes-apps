@@ -201,7 +201,16 @@ CREATE TABLE command_history (
 This project is provided as-is for educational and personal use.
 
 
-prompt:
-
-Ok create a website that has a terminal like look like when you open a terminal in debian. it should also behave like it for the most actions that you can perform. the available commands should be shown when only hitting enter. The cursor and the theme should look like debian terminal but you can also add a ascii image when loading first that will also shown in the terminal. maybe some cool .net logo. please use following frameworks: Next.js (React + TypeScript) + FastAPI (Python) + PostgreSQL
-everything should work in my k8s cluster, so that i can use my argocd setup (everything is already setup ...i mean the cluster and argocd). I want you create the code that i can push into may github repo and from there i can configure the repo url to use it with argocd so that everything will be deployed automatically into my k8s cluster.
+## Prompt:
+Create a web application with a terminal-style interface that visually and functionally resembles the Debian terminal. The interface should behave like a real terminal for most common actions. When the user presses Enter with no input, it should display a list of available commands.
+The design should include:
+- A Debian-like cursor and theme (colors, fonts, layout).
+- An ASCII art logo (for example, a stylized .NET logo) displayed on load and within the terminal window.
+Tech stack:
+- Frontend: Next.js (React + TypeScript)
+- Backend: FastAPI (Python)
+- Database: PostgreSQL
+Infrastructure requirements:
+- The entire app must be deployable in a Kubernetes cluster.
+- It should integrate smoothly with an existing ArgoCD setup for automated deployment.
+- I should be able to push the code to my GitHub repo, configure the repository URL in ArgoCD, and have the system deploy everything automatically.
