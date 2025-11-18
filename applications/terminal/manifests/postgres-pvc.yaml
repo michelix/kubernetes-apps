@@ -6,6 +6,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: linstor-lvm-r1
   resources:
     requests:
       storage: 5Gi
