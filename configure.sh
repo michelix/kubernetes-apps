@@ -46,6 +46,9 @@ sed -i "s|YOUR_HOMEPAGE_ALLOWED_HOSTS|${HOMEPAGE_ALLOWED_HOSTS}|g" applications/
 # Update homepage ingress
 sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/homepage/manifests/ingress.yaml
 
+# Update terminal ingress
+sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/terminal/manifests/ingress.yaml
+
 echo "✅ Configuration updated successfully!"
 echo ""
 echo "📋 Your configuration:"
