@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: YOUR_REGISTRY/terminal-frontend:latest
+        image: docker.io/michelix/terminal-frontend:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
