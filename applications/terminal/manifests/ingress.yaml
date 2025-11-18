@@ -3,6 +3,12 @@ kind: Ingress
 metadata:
   name: terminal-ingress
   namespace: terminal
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Terminal"
+    gethomepage.dev/description: "Web-based Terminal Emulator"
+    gethomepage.dev/group: "Kubernetes Services"
+    gethomepage.dev/icon: terminal.png
 spec:
   ingressClassName: cilium
   rules:
