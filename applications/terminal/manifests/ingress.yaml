@@ -3,15 +3,8 @@ kind: Ingress
 metadata:
   name: terminal-ingress
   namespace: terminal
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
-  ingressClassName: nginx
-  tls:
-  - hosts:
-    - terminal.valentak.at
-    secretName: terminal-tls
+  ingressClassName: cilium
   rules:
   - host: terminal.valentak.at
     http:
