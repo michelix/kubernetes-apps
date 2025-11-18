@@ -10,10 +10,10 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - terminal.YOUR_DOMAIN
+    - terminal.valentak.at
     secretName: terminal-tls
   rules:
-  - host: terminal.YOUR_DOMAIN
+  - host: terminal.valentak.at
     http:
       paths:
       - path: /
