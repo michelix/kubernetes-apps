@@ -31,13 +31,17 @@ docker tag ${REGISTRY}/terminal-backend:${VERSION} ${REGISTRY}/terminal-backend:
 echo "✅ Backend image built successfully"
 echo ""
 
-# Push images (optional - uncomment to push)
-# echo "📤 Pushing images to registry..."
-# docker push ${REGISTRY}/terminal-frontend:${VERSION}
-# docker push ${REGISTRY}/terminal-frontend:latest
-# docker push ${REGISTRY}/terminal-backend:${VERSION}
-# docker push ${REGISTRY}/terminal-backend:latest
-# echo "✅ Images pushed successfully"
+# Push images (set PUSH_IMAGES=true to enable)
+if [ "${PUSH_IMAGES}" = "true" ]; then
+    echo "📤 Pushing images to registry..."
+    docker push ${REGISTRY}/terminal-frontend:${VERSION}
+    docker push ${REGISTRY}/terminal-frontend:latest
+    docker push ${REGISTRY}/terminal-backend:${VERSION}
+    docker push ${REGISTRY}/terminal-backend:latest
+    echo "✅ Images pushed successfully"
+else
+    echo "ℹ️  Skipping push (set PUSH_IMAGES=true to push images)"
+fi
 
 echo ""
 echo "🎉 Build complete!"
