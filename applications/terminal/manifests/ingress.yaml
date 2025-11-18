@@ -3,6 +3,9 @@ kind: Ingress
 metadata:
   name: terminal-ingress
   namespace: terminal
+  labels:
+    app.kubernetes.io/name: terminal-ingress
+    app.kubernetes.io/part-of: terminal
   annotations:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: "Terminal"
