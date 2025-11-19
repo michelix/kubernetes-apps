@@ -199,21 +199,3 @@ CREATE TABLE command_history (
 ## 📄 License
 
 This project is provided as-is for educational and personal use.
-
-
-## Prompt:
-Create a web application with a terminal-style interface that visually and functionally resembles the Debian terminal. The interface should behave like a real terminal for most common actions. When the user presses Enter with no input, it should display a list of available commands.
-
-**The design should include**:
-- A Debian-like cursor and theme (colors, fonts, layout).
-- An ASCII art logo (for example, a stylized .NET logo) displayed on load and within the terminal window.
-  
-**Tech stack**:
-- Frontend: Next.js (React + TypeScript)
-- Backend: FastAPI (Python)
-- Database: PostgreSQL
-  
-**Infrastructure requirements**:
-- The entire app must be deployable in a Kubernetes cluster.
-- It should integrate smoothly with an existing ArgoCD setup for automated deployment.
-- I should be able to push the code to my GitHub repo, configure the repository URL in ArgoCD, and have the system deploy everything automatically.
