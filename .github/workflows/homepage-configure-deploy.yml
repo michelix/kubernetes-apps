@@ -54,7 +54,19 @@ jobs:
             git fetch origin deploy
             git checkout deploy
             # Merge latest from main to keep deploy branch updated
-            git merge main --no-edit --no-ff || true
+            # Use theirs strategy for homepage files (we'll reconfigure them anyway)
+            # Use ours strategy for other files to keep configured values
+            if ! git merge main --no-edit --no-ff -X theirs applications/homepage/ 2>/dev/null; then
+              echo "Merge conflict detected, resolving conflicts"
+              # For homepage files, take main's version (we'll reconfigure)
+              git checkout --theirs applications/homepage/ 2>/dev/null || true
+              git add applications/homepage/ 2>/dev/null || true
+              # For other files, keep deploy branch version
+              git checkout --ours applications/terminal/ 2>/dev/null || true
+              git add applications/terminal/ 2>/dev/null || true
+              # Complete the merge
+              git commit --no-edit || git merge --abort || true
+            fi
           else
             echo "Creating new deploy branch from main"
             git checkout -b deploy
