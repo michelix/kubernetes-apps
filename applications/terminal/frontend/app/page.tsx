@@ -14,22 +14,26 @@ interface CommandHistory {
 
 const NEOFETCH_OUTPUT = `                    web-user@terminal
                     ---------------
-            ████████████████      OS: Kubernetes Terminal
-            ████████████████      Host: Terminal Web App
-            ████████████████      Kernel: Next.js 14
-            ████████████████      Uptime: Just started
-            ████████████████      Packages: npm + pip
-            ████████████████      Shell: web-terminal
-            ████████████████      Resolution: Browser
-            ████████████████      DE: Web Browser
-            ████████████████      WM: Not applicable
-            ████████████████      Theme: Dark
-            ████████████████      Icons: Terminal
-            ████████████████      Font: Courier New
-            ████████████████      CPU: Browser Engine
-            ████████████████      GPU: WebGL
-            ████████████████      Memory: Dynamic
-            ████████████████      
+                11111111                 OS: Kubernetes Terminal
+            7113590000953111             Host: Terminal Web App
+        111348888800808888853111         Kernel: Next.js 14
+    71359888888888077088888888895315     Uptime: Just started
+   7488000088000000770000008800008905    Packages: npm + pip
+   38880770000777777777777000077088847   Shell: web-terminal
+  148880077777770007700077777770088883   Resolution: Browser
+  4888880007777000077000077770008888841  DE: Web Browser
+ 38888880077037777777777773077008888893  WM: Not applicable
+ 588888807760000727777370000877088888847 Theme: Dark
+3888800007700577721001377720077000088881 Icons: Terminal
+1888087777777777777777777777777777808881 Font: Courier New
+1888095000775000077777700000770006908881 CPU: Browser Engine
+7598800080077700778000770077700800088841 GPU: WebGL
+  348888800007777700007777730008888842   Memory: Dynamic
+   7248888800077777777777700088888437    
+     148888807700000000007708888841      
+      7348880200088888800030888427       
+        134800008888888880008951         
+          71111111111111111111           
                                 
                     Welcome to the Terminal
 `
@@ -43,6 +47,7 @@ const HELP_TEXT = `Available commands:
   ls            - List files (simulated)
   pwd           - Print working directory
   history       - Show command history
+  neofetch      - Display system information
   about         - Show information about this terminal
   exit          - Exit the terminal (reloads page)
 
@@ -52,8 +57,8 @@ export default function Terminal() {
   const [history, setHistory] = useState<CommandHistory[]>([])
   const [currentInput, setCurrentInput] = useState('')
   const [showCursor, setShowCursor] = useState(true)
-  const [isLoading, setIsLoading] = useState(true)
-  const [showLogo, setShowLogo] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [showLogo, setShowLogo] = useState(false)
   const terminalRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -77,15 +82,6 @@ export default function Terminal() {
     if (inputRef.current) {
       inputRef.current.focus()
     }
-  }, [])
-
-  // Hide logo after 3 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowLogo(false)
-      setIsLoading(false)
-    }, 3000)
-    return () => clearTimeout(timer)
   }, [])
 
   const executeCommand = useCallback(async (command: string) => {
@@ -123,6 +119,8 @@ export default function Terminal() {
       output = '/home/web-user'
     } else if (trimmedCommand === 'history') {
       output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history'
+    } else if (trimmedCommand === 'neofetch') {
+      output = NEOFETCH_OUTPUT
     } else if (trimmedCommand === 'about') {
       output = `Terminal Web Application
 Built with Next.js, FastAPI, and PostgreSQL
@@ -193,6 +191,10 @@ Version: 1.0.0`
             marginBottom: '20px',
             whiteSpace: 'pre',
             fontFamily: "'Courier New', monospace",
+            lineHeight: '1.2',
+            fontSize: '13px',
+            userSelect: 'none',
+            pointerEvents: 'none',
           }}
         >
           {NEOFETCH_OUTPUT}
@@ -238,11 +240,12 @@ Version: 1.0.0`
             backgroundColor: 'transparent',
             border: 'none',
             outline: 'none',
-            color: '#ffffff',
             fontFamily: "'Courier New', monospace",
             fontSize: '14px',
             marginLeft: '5px',
             caretColor: 'transparent',
+            color: 'transparent',
+            textShadow: '0 0 0 #ffffff',
           }}
           autoFocus
         />

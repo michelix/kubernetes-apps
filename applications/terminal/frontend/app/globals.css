@@ -20,3 +20,15 @@ body {
   height: 100%;
 }
 
+/* Hide native input cursor completely */
+input[type="text"] {
+  caret-color: transparent !important;
+  color: transparent;
+  text-shadow: 0 0 0 #ffffff;
+}
+
+input[type="text"]:focus {
+  caret-color: transparent !important;
+  outline: none !important;
+}
+
