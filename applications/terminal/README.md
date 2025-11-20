@@ -67,7 +67,7 @@ nano config
 **Required Configuration Values:**
 - `DOMAIN`: Your domain name (e.g., `example.com`)
 - `DOCKER_REGISTRY`: Your Docker registry (e.g., `docker.io/username` or `ghcr.io/username`)
-- `GITHUB_USERNAME`: Your GitHub username
+- `REPO_USERNAME`: Your GitHub username
 - `LOCATION`, `LATITUDE`, `LONGITUDE`, `TIMEZONE`: For Homepage weather widget
 
 2. **Apply Configuration**:

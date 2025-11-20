@@ -31,15 +31,15 @@ jobs:
             exit 1
           fi
           
-          if [ -z "${{ secrets.GITHUB_USERNAME }}" ]; then
-            echo "❌ Error: GITHUB_USERNAME secret is not set"
-            echo "Please set GITHUB_USERNAME in repository secrets"
+          if [ -z "${{ secrets.REPO_USERNAME }}" ]; then
+            echo "❌ Error: REPO_USERNAME secret is not set"
+            echo "Please set REPO_USERNAME in repository secrets (your GitHub username)"
             exit 1
           fi
           
           echo "✅ Required secrets validated"
           echo "Domain: ${{ secrets.DOMAIN }}"
-          echo "GitHub Username: ${{ secrets.GITHUB_USERNAME }}"
+          echo "GitHub Username: ${{ secrets.REPO_USERNAME }}"
 
       - name: Setup deploy branch
         run: |
@@ -62,7 +62,7 @@ jobs:
           LATITUDE="${{ secrets.LATITUDE }}"
           LONGITUDE="${{ secrets.LONGITUDE }}"
           TIMEZONE="${{ secrets.TIMEZONE }}"
-          GITHUB_USERNAME="${{ secrets.GITHUB_USERNAME }}"
+          REPO_USERNAME="${{ secrets.REPO_USERNAME }}"
           
           # Set defaults for optional values
           LOCATION="${LOCATION:-Your City}"
@@ -90,7 +90,7 @@ jobs:
           sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/homepage/manifests/ingress.yaml
           
           # Update homepage application.yaml
-          sed -i "s|YOUR_USERNAME|${GITHUB_USERNAME}|g" applications/homepage/application.yaml
+          sed -i "s|YOUR_USERNAME|${REPO_USERNAME}|g" applications/homepage/application.yaml
           
           echo "✅ Configuration applied successfully"
 

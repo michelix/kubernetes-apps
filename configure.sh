@@ -21,7 +21,7 @@ if [ ! -f "config" ]; then
     echo "- LONGITUDE: Your longitude"
     echo "- TIMEZONE: Your timezone"
     echo "- DOCKER_REGISTRY: Your Docker registry (e.g., docker.io/username)"
-    echo "- GITHUB_USERNAME: Your GitHub username"
+    echo "- REPO_USERNAME: Your GitHub username"
     echo ""
     echo "After editing the config file, run this script again."
     exit 0
@@ -43,8 +43,8 @@ if [ -z "${DOCKER_REGISTRY}" ] || [ "${DOCKER_REGISTRY}" = "docker.io/YOUR_USERN
     exit 1
 fi
 
-if [ -z "${GITHUB_USERNAME}" ] || [ "${GITHUB_USERNAME}" = "YOUR_USERNAME" ]; then
-    echo "❌ Error: GITHUB_USERNAME is not set or is still the default value"
+if [ -z "${REPO_USERNAME}" ] || [ "${REPO_USERNAME}" = "YOUR_USERNAME" ]; then
+    echo "❌ Error: REPO_USERNAME is not set or is still the default value"
     echo "Please edit the 'config' file and set your GitHub username"
     exit 1
 fi
@@ -74,7 +74,7 @@ sed -i "s|YOUR_REGISTRY|${DOCKER_REGISTRY}|g" applications/terminal/manifests/fr
 sed -i "s|YOUR_REGISTRY|${DOCKER_REGISTRY}|g" applications/terminal/manifests/backend-deployment.yaml
 
 # Update terminal application.yaml with GitHub username
-sed -i "s|YOUR_USERNAME|${GITHUB_USERNAME}|g" applications/terminal/application.yaml
+sed -i "s|YOUR_USERNAME|${REPO_USERNAME}|g" applications/terminal/application.yaml
 
 echo "✅ Configuration updated successfully!"
 echo ""
@@ -84,7 +84,7 @@ echo "Location: ${LOCATION}"
 echo "Coordinates: ${LATITUDE}, ${LONGITUDE}"
 echo "Timezone: ${TIMEZONE}"
 echo "Docker Registry: ${DOCKER_REGISTRY}"
-echo "GitHub Username: ${GITHUB_USERNAME}"
+echo "GitHub Username: ${REPO_USERNAME}"
 echo ""
 echo "📝 Next steps:"
 echo "1. Review the updated configuration files"
@@ -94,7 +94,7 @@ echo "4. Configure ArgoCD to use this repository"
 echo ""
 echo "🔗 ArgoCD Application Creation:"
 echo "Application Name: homepage"
-echo "Repository URL: https://github.com/${GITHUB_USERNAME}/kubernetes-apps.git"
+echo "Repository URL: https://github.com/${REPO_USERNAME}/kubernetes-apps.git"
 echo "Path: applications/homepage/manifests"
 echo "Cluster URL: https://kubernetes.default.svc"
 echo "Namespace: homepage"

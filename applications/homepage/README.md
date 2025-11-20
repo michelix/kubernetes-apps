@@ -53,7 +53,7 @@ This application uses a GitHub Actions workflow that automatically configures ma
 
 **Required GitHub Secrets:**
 - `DOMAIN`: Your domain name (e.g., `example.com`) - **Required**
-- `GITHUB_USERNAME`: Your GitHub username - **Required**
+- `REPO_USERNAME`: Your GitHub username - **Required**
 - `LOCATION`: Your city name (optional, default: "Your City")
 - `LATITUDE`: Your latitude (optional, default: "0.0")
 - `LONGITUDE`: Your longitude (optional, default: "0.0")

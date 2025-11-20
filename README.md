@@ -47,7 +47,7 @@ nano config
 **Required Configuration Values:**
 - `DOMAIN`: Your domain name (e.g., `example.com`)
 - `DOCKER_REGISTRY`: Your Docker registry (e.g., `docker.io/username` or `ghcr.io/username`)
-- `GITHUB_USERNAME`: Your GitHub username
+- `REPO_USERNAME`: Your GitHub username (for GitHub Secrets, use `REPO_USERNAME` as `GITHUB_` prefix is reserved)
 - `LOCATION`, `LATITUDE`, `LONGITUDE`, `TIMEZONE`: For Homepage weather widget (optional)
 
 2. **Apply Configuration**:
@@ -67,7 +67,7 @@ This script will:
 - **Automated Configuration**: Some applications (homepage, terminal) use GitHub Actions workflows that automatically configure manifests and commit them to a `deploy` branch
 - **Required GitHub Secrets**: Configure the following secrets in your repository:
   - `DOMAIN`: Your domain name (required for homepage)
-  - `GITHUB_USERNAME`: Your GitHub username (required)
+  - `REPO_USERNAME`: Your GitHub username (required)
   - `DOCKERHUB_USERNAME`: Docker Hub login (required for terminal)
   - `DOCKER_REGISTRY_PATH`: Docker Hub registry path (required for terminal)
   - `DOCKERHUB_TOKEN`: Docker Hub access token (required for terminal)

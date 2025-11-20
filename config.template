@@ -15,7 +15,7 @@ TIMEZONE=Europe/Berlin
 DOCKER_REGISTRY=docker.io/YOUR_USERNAME
 
 # Git Repository Configuration
-GITHUB_USERNAME=YOUR_USERNAME
+REPO_USERNAME=YOUR_USERNAME
 
 # Service URLs (update with your actual domains)
 PROXMOX_URL=https://pve.${DOMAIN}:8006/
