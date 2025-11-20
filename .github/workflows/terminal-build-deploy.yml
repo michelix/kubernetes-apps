@@ -32,13 +32,16 @@ jobs:
       - name: Set Docker Registry
         id: docker-registry
         run: |
-          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
-            echo "❌ Error: DOCKERHUB_USERNAME secret is not set"
+          DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
+          if [ -z "${DOCKERHUB_USERNAME}" ] || [ "${DOCKERHUB_USERNAME}" = "" ]; then
+            echo "❌ Error: DOCKERHUB_USERNAME secret is not set or is empty"
+            echo "Please set DOCKERHUB_USERNAME in repository secrets"
             exit 1
           fi
-          DOCKER_REGISTRY="docker.io/${{ secrets.DOCKERHUB_USERNAME }}"
+          DOCKER_REGISTRY="docker.io/${DOCKERHUB_USERNAME}"
           echo "DOCKER_REGISTRY=${DOCKER_REGISTRY}" >> $GITHUB_ENV
-          echo "Using registry: ${DOCKER_REGISTRY}"
+          echo "✅ Using registry: docker.io/${DOCKERHUB_USERNAME}"
+          echo "Registry path: ${DOCKER_REGISTRY}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -56,6 +59,16 @@ jobs:
       - name: Extract commit hash (full)
         id: commit-full
         run: echo "FULL_SHA=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Verify Docker Registry
+        run: |
+          if [ -z "${{ env.DOCKER_REGISTRY }}" ]; then
+            echo "❌ Error: DOCKER_REGISTRY environment variable is not set"
+            exit 1
+          fi
+          echo "✅ Docker Registry verified: ${{ env.DOCKER_REGISTRY }}"
+          echo "Frontend image will be: ${{ env.DOCKER_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
+          echo "Backend image will be: ${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
