@@ -9,8 +9,8 @@ The CI/CD pipeline automatically:
 2. Tags images with the commit hash (short SHA) and `latest`
 3. Pushes images to Docker Hub
 4. Updates Kubernetes deployment manifests with the new image tags
-5. Commits the updated manifests back to the repository
-6. ArgoCD automatically syncs and deploys the new version
+5. Commits the updated manifests to the `deploy` branch (keeps `main` branch clean)
+6. ArgoCD automatically syncs from the `deploy` branch and deploys the new version
 
 ## Prerequisites
 
@@ -59,7 +59,7 @@ To customize:
 #### Automatic Deployment Flow
 
 ```
-Code Change → Push to GitHub
+Code Change → Push to GitHub (main branch)
     ↓
 GitHub Actions Workflow Triggers
     ↓
@@ -69,16 +69,20 @@ Tag with Commit Hash (e.g., e197848)
     ↓
 Push to Docker Hub
     ↓
+Switch to/Create 'deploy' Branch
+    ↓
 Update Deployment Manifests
     ↓
-Commit & Push Updated Manifests
+Commit & Push to 'deploy' Branch
     ↓
-ArgoCD Detects Changes
+ArgoCD Detects Changes (watching 'deploy' branch)
     ↓
 ArgoCD Syncs & Deploys
     ↓
 New Version Running in Kubernetes
 ```
+
+**Note:** The workflow uses a separate `deploy` branch for manifest updates to keep the `main` branch clean. ArgoCD syncs from the `deploy` branch, not `main`.
 
 #### Image Tagging Strategy
 
@@ -89,6 +93,14 @@ The deployment manifests use the commit hash tag, ensuring:
 - Each deployment is traceable to a specific commit
 - Rollbacks are easy (just change the tag in the manifest)
 - No caching issues with `latest` tag
+
+#### Branch Strategy
+
+- **`main` branch**: Contains source code only (frontend, backend, manifests)
+- **`deploy` branch**: Contains updated deployment manifests with image tags
+  - Automatically created and updated by CI/CD
+  - ArgoCD syncs from this branch
+  - Keeps `main` branch history clean (no automated commits)
 
 ### 4. Manual Workflow Trigger
 
