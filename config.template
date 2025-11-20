@@ -10,6 +10,13 @@ LATITUDE=0.0
 LONGITUDE=0.0
 TIMEZONE=Europe/Berlin
 
+# Docker Registry Configuration
+# Format: registry.io/username or docker.io/username
+DOCKER_REGISTRY=docker.io/YOUR_USERNAME
+
+# Git Repository Configuration
+GITHUB_USERNAME=YOUR_USERNAME
+
 # Service URLs (update with your actual domains)
 PROXMOX_URL=https://pve.${DOMAIN}:8006/
 TRAEFIK_URL=https://traefik.${DOMAIN}/dashboard/

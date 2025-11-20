@@ -5,8 +5,18 @@
 
 set -e
 
+# Load registry from config file if available (from repository root)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+CONFIG_FILE="${REPO_ROOT}/config"
+
 # Configuration
-REGISTRY="${DOCKER_REGISTRY:-docker.io/michelix}"
+# Priority: 1. DOCKER_REGISTRY env var, 2. config file, 3. default placeholder
+if [ -z "${DOCKER_REGISTRY}" ] && [ -f "${CONFIG_FILE}" ]; then
+    # DOCKER_REGISTRY will be loaded from config file if not set as env var
+    source "${CONFIG_FILE}"
+fi
+REGISTRY="${DOCKER_REGISTRY:-YOUR_REGISTRY}"
 # Use commit hash if available, otherwise use VERSION or latest
 if [ -d .git ] && command -v git &> /dev/null; then
   COMMIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "")
@@ -21,6 +31,18 @@ echo "Registry: ${REGISTRY}"
 echo "Version: ${VERSION}"
 if [ -n "${COMMIT_SHA}" ]; then
   echo "Commit: ${COMMIT_SHA}"
+fi
+echo ""
+
+# Validate registry is not a placeholder
+if [ "${REGISTRY}" = "YOUR_REGISTRY" ] || [ -z "${REGISTRY}" ]; then
+    echo "❌ Error: DOCKER_REGISTRY is not set!"
+    echo ""
+    echo "Please set DOCKER_REGISTRY in one of the following ways:"
+    echo "1. Environment variable: export DOCKER_REGISTRY=docker.io/username"
+    echo "2. Config file: Add DOCKER_REGISTRY=docker.io/username to ${CONFIG_FILE}"
+    echo "3. Run configure.sh from repository root to set up config file"
+    exit 1
 fi
 echo ""
 

@@ -12,8 +12,8 @@ on:
 
 env:
   REGISTRY: docker.io
-  FRONTEND_IMAGE: michelix/terminal-frontend
-  BACKEND_IMAGE: michelix/terminal-backend
+  FRONTEND_IMAGE: terminal-frontend
+  BACKEND_IMAGE: terminal-backend
 
 jobs:
   build-and-push:
@@ -28,6 +28,17 @@ jobs:
         with:
           fetch-depth: 0  # Need full history for commit hash
           ref: main  # Always checkout from main to get the source code
+
+      - name: Set Docker Registry
+        id: docker-registry
+        run: |
+          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
+            echo "❌ Error: DOCKERHUB_USERNAME secret is not set"
+            exit 1
+          fi
+          DOCKER_REGISTRY="docker.io/${{ secrets.DOCKERHUB_USERNAME }}"
+          echo "DOCKER_REGISTRY=${DOCKER_REGISTRY}" >> $GITHUB_ENV
+          echo "Using registry: ${DOCKER_REGISTRY}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -52,10 +63,10 @@ jobs:
           context: ./applications/terminal/frontend
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}
-            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:buildcache,mode=max
+            ${{ env.DOCKER_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}
+            ${{ env.DOCKER_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
+          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:buildcache,mode=max
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
@@ -63,10 +74,10 @@ jobs:
           context: ./applications/terminal/backend
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}
-            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:buildcache,mode=max
+            ${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}
+            ${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
+          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:buildcache,mode=max
 
       - name: Setup deploy branch
         run: |
@@ -85,13 +96,20 @@ jobs:
       - name: Update deployment manifests with new image tags
         run: |
           SHORT_SHA="${{ steps.commit.outputs.SHORT_SHA }}"
+          DOCKER_REGISTRY="${{ env.DOCKER_REGISTRY }}"
           
           # Update frontend deployment
-          sed -i "s|image: docker.io/michelix/terminal-frontend:.*|image: docker.io/michelix/terminal-frontend:${SHORT_SHA}|g" \
+          # Handle both YOUR_REGISTRY placeholder and existing image tags
+          sed -i "s|image: YOUR_REGISTRY/terminal-frontend:.*|image: ${DOCKER_REGISTRY}/terminal-frontend:${SHORT_SHA}|g" \
+            applications/terminal/manifests/frontend-deployment.yaml
+          sed -i "s|image: ${DOCKER_REGISTRY}/terminal-frontend:.*|image: ${DOCKER_REGISTRY}/terminal-frontend:${SHORT_SHA}|g" \
             applications/terminal/manifests/frontend-deployment.yaml
           
           # Update backend deployment
-          sed -i "s|image: docker.io/michelix/terminal-backend:.*|image: docker.io/michelix/terminal-backend:${SHORT_SHA}|g" \
+          # Handle both YOUR_REGISTRY placeholder and existing image tags
+          sed -i "s|image: YOUR_REGISTRY/terminal-backend:.*|image: ${DOCKER_REGISTRY}/terminal-backend:${SHORT_SHA}|g" \
+            applications/terminal/manifests/backend-deployment.yaml
+          sed -i "s|image: ${DOCKER_REGISTRY}/terminal-backend:.*|image: ${DOCKER_REGISTRY}/terminal-backend:${SHORT_SHA}|g" \
             applications/terminal/manifests/backend-deployment.yaml
           
           # Change imagePullPolicy to IfNotPresent for better caching
@@ -122,8 +140,8 @@ jobs:
       - name: Output deployment info
         run: |
           echo "✅ Images built and pushed:"
-          echo "  Frontend: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
-          echo "  Backend: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
+          echo "  Frontend: ${{ env.DOCKER_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
+          echo "  Backend: ${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
           echo ""
           echo "📝 Deployment manifests updated with new image tags"
           echo "🔄 ArgoCD will automatically sync the changes"
