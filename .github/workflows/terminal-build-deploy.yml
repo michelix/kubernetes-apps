@@ -33,15 +33,25 @@ jobs:
         id: docker-registry
         run: |
           DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
+          DOCKER_REGISTRY_PATH="${{ secrets.DOCKER_REGISTRY_PATH }}"
+          
           if [ -z "${DOCKERHUB_USERNAME}" ] || [ "${DOCKERHUB_USERNAME}" = "" ]; then
             echo "❌ Error: DOCKERHUB_USERNAME secret is not set or is empty"
-            echo "Please set DOCKERHUB_USERNAME in repository secrets"
+            echo "Please set DOCKERHUB_USERNAME in repository secrets (your Docker Hub login email)"
             exit 1
           fi
-          DOCKER_REGISTRY="docker.io/${DOCKERHUB_USERNAME}"
+          
+          if [ -z "${DOCKER_REGISTRY_PATH}" ] || [ "${DOCKER_REGISTRY_PATH}" = "" ]; then
+            echo "❌ Error: DOCKER_REGISTRY_PATH secret is not set or is empty"
+            echo "Please set DOCKER_REGISTRY_PATH in repository secrets (your Docker Hub organization/username for images, e.g., 'michelix')"
+            exit 1
+          fi
+          
+          DOCKER_REGISTRY="docker.io/${DOCKER_REGISTRY_PATH}"
           echo "DOCKER_REGISTRY=${DOCKER_REGISTRY}" >> $GITHUB_ENV
-          echo "✅ Using registry: docker.io/${DOCKERHUB_USERNAME}"
+          echo "✅ Using registry: docker.io/${DOCKER_REGISTRY_PATH}"
           echo "Registry path: ${DOCKER_REGISTRY}"
+          echo "Docker Hub login: ${DOCKERHUB_USERNAME}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
