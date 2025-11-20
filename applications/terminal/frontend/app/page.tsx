@@ -12,15 +12,26 @@ interface CommandHistory {
   timestamp: Date
 }
 
-const ASCII_LOGO = `
-    ███╗   ██╗███████╗████████╗
-    ████╗  ██║██╔════╝╚══██╔══╝
-    ██╔██╗ ██║█████╗     ██║   
-    ██║╚██╗██║██╔══╝     ██║   
-    ██║ ╚████║███████╗   ██║   
-    ╚═╝  ╚═══╝╚══════╝   ╚═╝   
+const NEOFETCH_OUTPUT = `                    web-user@terminal
+                    ---------------
+            ████████████████      OS: Kubernetes Terminal
+            ████████████████      Host: Terminal Web App
+            ████████████████      Kernel: Next.js 14
+            ████████████████      Uptime: Just started
+            ████████████████      Packages: npm + pip
+            ████████████████      Shell: web-terminal
+            ████████████████      Resolution: Browser
+            ████████████████      DE: Web Browser
+            ████████████████      WM: Not applicable
+            ████████████████      Theme: Dark
+            ████████████████      Icons: Terminal
+            ████████████████      Font: Courier New
+            ████████████████      CPU: Browser Engine
+            ████████████████      GPU: WebGL
+            ████████████████      Memory: Dynamic
+            ████████████████      
                                 
-    Welcome to the Terminal
+                    Welcome to the Terminal
 `
 
 const HELP_TEXT = `Available commands:
@@ -153,6 +164,9 @@ Version: 1.0.0`
       if (lastCommand) {
         setCurrentInput(lastCommand)
       }
+    } else if (e.key === 'l' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault()
+      setHistory([])
     }
   }
 
@@ -181,7 +195,7 @@ Version: 1.0.0`
             fontFamily: "'Courier New', monospace",
           }}
         >
-          {ASCII_LOGO}
+          {NEOFETCH_OUTPUT}
         </pre>
       )}
 
@@ -228,6 +242,7 @@ Version: 1.0.0`
             fontFamily: "'Courier New', monospace",
             fontSize: '14px',
             marginLeft: '5px',
+            caretColor: 'transparent',
           }}
           autoFocus
         />
