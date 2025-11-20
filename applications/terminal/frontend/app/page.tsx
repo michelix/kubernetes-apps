@@ -12,8 +12,9 @@ interface CommandHistory {
   timestamp: Date
 }
 
-const NEOFETCH_OUTPUT = `                    web-user@terminal
-                    ---------------
+const NEOFETCH_OUTPUT = `                    
+web-user@terminal
+---------------
                 11111111                 OS: Kubernetes Terminal
             7113590000953111             Host: Terminal Web App
         111348888800808888853111         Kernel: Next.js 14
@@ -35,7 +36,7 @@ const NEOFETCH_OUTPUT = `                    web-user@terminal
         134800008888888880008951         
           71111111111111111111           
                                 
-                    Welcome to the Terminal
+Welcome to the Terminal
 `
 
 const HELP_TEXT = `Available commands:
@@ -229,35 +230,45 @@ Version: 1.0.0`
         <span style={{ color: '#ffffff' }}>:</span>
         <span style={{ color: '#00bfff' }}>~</span>
         <span style={{ color: '#ffffff' }}>$ </span>
-        <input
-          ref={inputRef}
-          type="text"
-          value={currentInput}
-          onChange={(e) => setCurrentInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          style={{
-            flex: 1,
-            backgroundColor: 'transparent',
-            border: 'none',
-            outline: 'none',
-            fontFamily: "'Courier New', monospace",
-            fontSize: '14px',
-            marginLeft: '5px',
-            caretColor: 'transparent',
-            color: 'transparent',
-            textShadow: '0 0 0 #ffffff',
-          }}
-          autoFocus
-        />
-        <span
-          style={{
-            display: 'inline-block',
-            width: '8px',
-            height: '16px',
-            backgroundColor: showCursor ? '#ffffff' : 'transparent',
-            marginLeft: '2px',
-          }}
-        />
+        <div style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '5px', position: 'relative' }}>
+          <span style={{ color: '#ffffff', whiteSpace: 'pre', fontFamily: "'Courier New', monospace", fontSize: '14px' }}>
+            {currentInput}
+          </span>
+          <span
+            style={{
+              display: 'inline-block',
+              width: '8px',
+              height: '16px',
+              backgroundColor: showCursor ? '#ffffff' : 'transparent',
+              marginLeft: '2px',
+            }}
+          />
+          <input
+            ref={inputRef}
+            type="text"
+            value={currentInput}
+            onChange={(e) => setCurrentInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'transparent',
+              border: 'none',
+              outline: 'none',
+              fontFamily: "'Courier New', monospace",
+              fontSize: '14px',
+              caretColor: 'transparent',
+              color: 'transparent',
+              textShadow: '0 0 0 transparent',
+              padding: 0,
+              margin: 0,
+            }}
+            autoFocus
+          />
+        </div>
       </div>
     </div>
   )
