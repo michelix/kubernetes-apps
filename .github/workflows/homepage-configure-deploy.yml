@@ -41,6 +41,11 @@ jobs:
           echo "Domain: ${{ secrets.DOMAIN }}"
           echo "GitHub Username: ${{ secrets.REPO_USERNAME }}"
 
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
       - name: Setup deploy branch
         run: |
           # Check if deploy branch exists remotely
@@ -109,8 +114,6 @@ jobs:
       - name: Commit configured manifests to deploy branch
         if: steps.check-manifests.outputs.HAS_CHANGES == 'true'
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
           git commit -m "chore(homepage): configure with domain ${{ secrets.DOMAIN }}"
           git push origin deploy
 
