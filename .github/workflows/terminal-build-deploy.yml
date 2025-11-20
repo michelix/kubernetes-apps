@@ -1,0 +1,115 @@
+name: Build and Deploy Terminal Application
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'applications/terminal/frontend/**'
+      - 'applications/terminal/backend/**'
+      - '.github/workflows/terminal-build-deploy.yml'
+  workflow_dispatch:
+
+env:
+  REGISTRY: docker.io
+  FRONTEND_IMAGE: michelix/terminal-frontend
+  BACKEND_IMAGE: michelix/terminal-backend
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for commit hash
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract commit hash (short)
+        id: commit
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Extract commit hash (full)
+        id: commit-full
+        run: echo "FULL_SHA=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./applications/terminal/frontend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:buildcache,mode=max
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./applications/terminal/backend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:buildcache,mode=max
+
+      - name: Update deployment manifests with new image tags
+        run: |
+          SHORT_SHA="${{ steps.commit.outputs.SHORT_SHA }}"
+          
+          # Update frontend deployment
+          sed -i "s|image: docker.io/michelix/terminal-frontend:.*|image: docker.io/michelix/terminal-frontend:${SHORT_SHA}|g" \
+            applications/terminal/manifests/frontend-deployment.yaml
+          
+          # Update backend deployment
+          sed -i "s|image: docker.io/michelix/terminal-backend:.*|image: docker.io/michelix/terminal-backend:${SHORT_SHA}|g" \
+            applications/terminal/manifests/backend-deployment.yaml
+          
+          # Change imagePullPolicy to IfNotPresent for better caching
+          sed -i "s|imagePullPolicy: Always|imagePullPolicy: IfNotPresent|g" \
+            applications/terminal/manifests/frontend-deployment.yaml \
+            applications/terminal/manifests/backend-deployment.yaml
+
+      - name: Check for manifest changes
+        id: check-manifests
+        run: |
+          git add applications/terminal/manifests/*.yaml
+          if git diff --staged --quiet; then
+            echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  No manifest changes needed"
+          else
+            echo "HAS_CHANGES=true" >> $GITHUB_OUTPUT
+            echo "📝 Manifest changes detected"
+          fi
+
+      - name: Commit updated manifests
+        if: steps.check-manifests.outputs.HAS_CHANGES == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "chore(terminal): update image tags to ${{ steps.commit.outputs.SHORT_SHA }} [skip ci]"
+          git push
+
+      - name: Output deployment info
+        run: |
+          echo "✅ Images built and pushed:"
+          echo "  Frontend: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
+          echo "  Backend: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
+          echo ""
+          echo "📝 Deployment manifests updated with new image tags"
+          echo "🔄 ArgoCD will automatically sync the changes"
+

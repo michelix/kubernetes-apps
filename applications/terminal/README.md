@@ -42,6 +42,19 @@ terminal/
 
 ### Building Docker Images
 
+#### Automated CI/CD (Recommended)
+
+The application uses GitHub Actions for automated builds and deployments. See [CI_CD_SETUP.md](./CI_CD_SETUP.md) for setup instructions.
+
+**Quick Setup:**
+1. Add Docker Hub credentials as GitHub secrets (`DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`)
+2. Push code changes to the `main` branch
+3. GitHub Actions will automatically build, tag, and push images
+4. Deployment manifests are updated automatically
+5. ArgoCD syncs and deploys the new version
+
+#### Manual Building
+
 1. **Build Frontend Image**:
 ```bash
 cd applications/terminal/frontend
@@ -56,11 +69,19 @@ docker build -t YOUR_REGISTRY/terminal-backend:latest .
 docker push YOUR_REGISTRY/terminal-backend:latest
 ```
 
+Or use the build script:
+```bash
+cd applications/terminal
+DOCKER_REGISTRY=YOUR_REGISTRY ./build.sh
+```
+
 ### Configuration
+
+**Note:** If using CI/CD, image references are updated automatically. Manual configuration is only needed for initial setup or manual deployments.
 
 Before deploying, update the following files:
 
-1. **Update Image References**:
+1. **Update Image References** (if not using CI/CD):
    - `manifests/frontend-deployment.yaml`: Replace `YOUR_REGISTRY/terminal-frontend:latest`
    - `manifests/backend-deployment.yaml`: Replace `YOUR_REGISTRY/terminal-backend:latest`
 

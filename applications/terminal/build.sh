@@ -6,13 +6,22 @@
 set -e
 
 # Configuration
-REGISTRY="${DOCKER_REGISTRY:-YOUR_REGISTRY}"
-VERSION="${VERSION:-latest}"
+REGISTRY="${DOCKER_REGISTRY:-docker.io/michelix}"
+# Use commit hash if available, otherwise use VERSION or latest
+if [ -d .git ] && command -v git &> /dev/null; then
+  COMMIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "")
+  VERSION="${VERSION:-${COMMIT_SHA:-latest}}"
+else
+  VERSION="${VERSION:-latest}"
+fi
 
 echo "🔨 Building Terminal Application Docker Images"
 echo "=============================================="
 echo "Registry: ${REGISTRY}"
 echo "Version: ${VERSION}"
+if [ -n "${COMMIT_SHA}" ]; then
+  echo "Commit: ${COMMIT_SHA}"
+fi
 echo ""
 
 # Build Frontend
