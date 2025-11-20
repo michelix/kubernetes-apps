@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/michelix/kubernetes-apps.git
-    targetRevision: HEAD
+    targetRevision: deploy
     path: applications/homepage/manifests
   destination:
     server: https://kubernetes.default.svc
