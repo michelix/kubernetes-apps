@@ -60,9 +60,8 @@ sed -i "s|YOUR_TIMEZONE|${TIMEZONE}|g" applications/homepage/manifests/configmap
 sed -i "s|YOUR_HOMEPAGE_HOSTNAME|${HOMEPAGE_HOSTNAME}|g" applications/homepage/manifests/configmap.yaml
 sed -i "s|YOUR_HOMEPAGE_TITLE|${HOMEPAGE_TITLE}|g" applications/homepage/manifests/configmap.yaml
 
-# Update homepage deployment
-sed -i "s|YOUR_HOMEPAGE_HOSTNAME|${HOMEPAGE_HOSTNAME}|g" applications/homepage/manifests/deployment.yaml
-sed -i "s|YOUR_HOMEPAGE_ALLOWED_HOSTS|${HOMEPAGE_ALLOWED_HOSTS}|g" applications/homepage/manifests/deployment.yaml
+# Update homepage deployment (replace YOUR_DOMAIN with actual domain)
+sed -i "s|homepage.YOUR_DOMAIN|homepage.${DOMAIN}|g" applications/homepage/manifests/deployment.yaml
 
 # Update homepage ingress
 sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/homepage/manifests/ingress.yaml

@@ -8,8 +8,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/michelix/kubernetes-apps.git
-    targetRevision: HEAD
+    repoURL: https://github.com/YOUR_USERNAME/kubernetes-apps.git
+    targetRevision: deploy
     path: applications/homepage/manifests
   destination:
     server: https://kubernetes.default.svc
