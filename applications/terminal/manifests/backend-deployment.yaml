@@ -18,7 +18,7 @@ spec:
       containers:
       - name: backend
         # Image tag will be automatically updated by CI/CD workflow
-        image: docker.io/michelix/terminal-backend:81b0c6e
+        image: docker.io/michelix/terminal-backend:8e918e8
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
