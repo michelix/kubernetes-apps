@@ -96,6 +96,8 @@ jobs:
         with:
           context: ./applications/terminal/backend
           push: true
+          build-args: |
+            VERSION=${{ steps.commit.outputs.SHORT_SHA }}
           tags: |
             ${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}
             ${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest

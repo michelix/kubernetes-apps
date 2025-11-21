@@ -133,7 +133,7 @@ Version: 1.0.0`
     } else {
       // Try to execute on backend
       try {
-        const apiEndpoint = API_URL.startsWith('/') ? `${API_URL}/execute` : `${API_URL}/api/execute`
+        const apiEndpoint = API_URL.startsWith('/') ? `${API_URL}/v1/execute` : `${API_URL}/api/v1/execute`
         const response = await axios.post(apiEndpoint, {
           command: trimmedCommand,
         })

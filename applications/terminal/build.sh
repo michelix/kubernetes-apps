@@ -57,7 +57,7 @@ echo ""
 # Build Backend
 echo "📦 Building backend image..."
 cd ../backend
-docker build -t ${REGISTRY}/terminal-backend:${VERSION} .
+docker build --build-arg VERSION=${VERSION} -t ${REGISTRY}/terminal-backend:${VERSION} .
 docker tag ${REGISTRY}/terminal-backend:${VERSION} ${REGISTRY}/terminal-backend:latest
 echo "✅ Backend image built successfully"
 echo ""

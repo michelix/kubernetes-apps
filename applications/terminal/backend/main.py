@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import os
+import subprocess
 from datetime import datetime
 from database import get_db, init_db, save_command_history, get_command_history
 
@@ -10,25 +11,71 @@ from database import get_db, init_db, save_command_history, get_command_history
 # In production, docs are disabled for security
 enable_docs = os.getenv("ENABLE_DOCS", "false").lower() == "true"
 
-app = FastAPI(
+# Get version from environment variable, build arg, or default
+# Priority: 1. API_VERSION env var, 2. Build-time VERSION file, 3. Default
+def get_version():
+    # Try environment variable first (can be set at runtime or build time)
+    version = os.getenv("API_VERSION")
+    if version:
+        return version
+    
+    # Try to read from build-time VERSION file (created during Docker build)
+    try:
+        version_file = os.path.join(os.path.dirname(__file__), "VERSION")
+        if os.path.exists(version_file):
+            with open(version_file, "r") as f:
+                version = f.read().strip()
+                if version:
+                    return version
+    except Exception:
+        pass
+    
+    # Try to get version from git tag (for local development)
+    try:
+        result = subprocess.run(
+            ["git", "describe", "--tags", "--always"],
+            capture_output=True,
+            text=True,
+            timeout=1,
+            cwd=os.path.dirname(__file__)
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+        pass
+    
+    # Default version
+    return "1.0.0"
+
+api_version = get_version()
+
+# Create main FastAPI app (root level for health checks)
+app = FastAPI(title="Terminal API", version=api_version)
+
+# Create API v1 router
+api_v1_router = APIRouter(prefix="/v1", tags=["v1"])
+
+# Create sub-app for API with docs enabled/disabled
+api_app = FastAPI(
     title="Terminal API",
-    version="1.0.0",
+    version=api_version,
     docs_url="/docs" if enable_docs else None,
     redoc_url="/redoc" if enable_docs else None,
     openapi_url="/openapi.json" if enable_docs else None,
 )
 
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend domain
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS middleware for both apps
+cors_config = {
+    "allow_origins": ["*"],  # In production, specify your frontend domain
+    "allow_credentials": True,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+}
+app.add_middleware(CORSMiddleware, **cors_config)
+api_app.add_middleware(CORSMiddleware, **cors_config)
 
 # Initialize database on startup
-@app.on_event("startup")
+@api_app.on_event("startup")
 async def startup_event():
     init_db()
 
@@ -39,15 +86,17 @@ class CommandResponse(BaseModel):
     output: str
     error: Optional[str] = None
 
+# Root level endpoints (for health checks via ingress)
 @app.get("/")
 async def root():
-    return {"message": "Terminal API", "version": "1.0.0"}
+    return {"message": "Terminal API", "version": api_version}
 
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
-@app.post("/api/execute", response_model=CommandResponse)
+# API v1 endpoints
+@api_v1_router.post("/execute", response_model=CommandResponse)
 async def execute_command(request: CommandRequest):
     """
     Execute a terminal command and return the output.
@@ -108,7 +157,7 @@ web-user  1234  0.1  0.2  23456  2345 ?        S    10:05   0:02 node server.js"
     
     return CommandResponse(output=output, error=error)
 
-@app.get("/api/history")
+@api_v1_router.get("/history")
 async def get_history(limit: int = 50):
     """Get command history from database"""
     try:
@@ -116,6 +165,12 @@ async def get_history(limit: int = 50):
         return {"history": history}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# Include v1 router in API app
+api_app.include_router(api_v1_router)
+
+# Mount API app at /api prefix
+app.mount("/api", api_app)
 
 if __name__ == "__main__":
     import uvicorn
