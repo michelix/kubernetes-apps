@@ -183,11 +183,11 @@ async def get_history(limit: int = 50):
 api_app.include_router(api_v1_router)
 
 # Manually serve docs at /v1/docs since FastAPI's automatic docs don't work well
-# with custom paths in mounted apps. We'll use the same OpenAPI schema but serve
-# it at the versioned path.
+# with custom paths in mounted apps. We'll use FastAPI's built-in openapi() method
+# to get the correct schema with all routes included.
 if enable_docs:
     from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
-    from fastapi.openapi.utils import get_openapi
+    from fastapi.responses import JSONResponse
     
     @api_app.get("/v1/docs", include_in_schema=False)
     async def custom_swagger_ui_html():
@@ -208,16 +208,8 @@ if enable_docs:
     @api_app.get("/v1/openapi.json", include_in_schema=False)
     async def get_openapi_endpoint():
         """Serve OpenAPI schema at /api/v1/openapi.json"""
-        if api_app.openapi_schema:
-            return api_app.openapi_schema
-        openapi_schema = get_openapi(
-            title=api_app.title,
-            version=api_version,
-            description="Terminal API - Web-based terminal emulator",
-            routes=api_app.routes,
-        )
-        api_app.openapi_schema = openapi_schema
-        return openapi_schema
+        # Use FastAPI's built-in openapi() method to get the schema with all routes
+        return JSONResponse(api_app.openapi())
 
 # Mount API app at /api prefix
 app.mount("/api", api_app)
