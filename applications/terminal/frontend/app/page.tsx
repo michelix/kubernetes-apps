@@ -119,7 +119,24 @@ export default function Terminal() {
     } else if (trimmedCommand === 'pwd') {
       output = '/home/web-user'
     } else if (trimmedCommand === 'history') {
-      output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history'
+      // Fetch history from backend database
+      try {
+        const historyEndpoint = API_URL.startsWith('/') ? `${API_URL}/v1/history` : `${API_URL}/api/v1/history`
+        const response = await axios.get(historyEndpoint, { params: { limit: 50 } })
+        const backendHistory = response.data.history || []
+        if (backendHistory.length > 0) {
+          output = backendHistory.map((h: any, i: number) => 
+            `${i + 1}  ${h.command} (${new Date(h.timestamp).toLocaleString()})`
+          ).join('\n')
+        } else {
+          // Fallback to local history if backend has no entries
+          output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history'
+        }
+      } catch (error: any) {
+        // Fallback to local history on error
+        output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history'
+        console.error('Error fetching history from backend:', error)
+      }
     } else if (trimmedCommand === 'neofetch') {
       output = NEOFETCH_OUTPUT
     } else if (trimmedCommand === 'about') {

@@ -4,8 +4,13 @@ from pydantic import BaseModel
 from typing import Optional
 import os
 import subprocess
+import logging
 from datetime import datetime
 from database import get_db, init_db, save_command_history, get_command_history
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Enable docs only in development (when ENABLE_DOCS=true)
 # In production, docs are disabled for security
@@ -56,12 +61,13 @@ app = FastAPI(title="Terminal API", version=api_version)
 api_v1_router = APIRouter(prefix="/v1", tags=["v1"])
 
 # Create sub-app for API with docs enabled/disabled
+# Note: docs_url="/v1/docs" because api_app is mounted at /api, so final URL is /api/v1/docs
 api_app = FastAPI(
     title="Terminal API",
     version=api_version,
-    docs_url="/docs" if enable_docs else None,
-    redoc_url="/redoc" if enable_docs else None,
-    openapi_url="/openapi.json" if enable_docs else None,
+    docs_url="/v1/docs" if enable_docs else None,
+    redoc_url="/v1/redoc" if enable_docs else None,
+    openapi_url="/v1/openapi.json" if enable_docs else None,
 )
 
 # CORS middleware for both apps
@@ -103,6 +109,7 @@ async def execute_command(request: CommandRequest):
     Commands are executed in a safe, sandboxed environment.
     """
     command = request.command.strip()
+    logger.info(f"Execute endpoint called with command: {command}")
     
     if not command:
         return CommandResponse(output="")
@@ -160,10 +167,13 @@ web-user  1234  0.1  0.2  23456  2345 ?        S    10:05   0:02 node server.js"
 @api_v1_router.get("/history")
 async def get_history(limit: int = 50):
     """Get command history from database"""
+    logger.info(f"History endpoint called with limit={limit}")
     try:
         history = get_command_history(limit)
+        logger.info(f"Retrieved {len(history)} history entries from database")
         return {"history": history}
     except Exception as e:
+        logger.error(f"Error retrieving history: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 # Include v1 router in API app
