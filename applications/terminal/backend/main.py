@@ -61,13 +61,16 @@ app = FastAPI(title="Terminal API", version=api_version)
 api_v1_router = APIRouter(prefix="/v1", tags=["v1"])
 
 # Create sub-app for API with docs enabled/disabled
-# Note: docs_url="/v1/docs" because api_app is mounted at /api, so final URL is /api/v1/docs
+# When api_app is mounted at /api, requests to /api/* become /* in the mounted app
+# So docs_url="/docs" means docs are at /api/docs from main app
+# To have docs at /api/v1/docs, we need to use root_path or mount differently
+# Actually, FastAPI docs are app-level, so we'll put them at /api/docs and add a redirect
 api_app = FastAPI(
     title="Terminal API",
     version=api_version,
-    docs_url="/v1/docs" if enable_docs else None,
-    redoc_url="/v1/redoc" if enable_docs else None,
-    openapi_url="/v1/openapi.json" if enable_docs else None,
+    docs_url="/docs" if enable_docs else None,
+    redoc_url="/redoc" if enable_docs else None,
+    openapi_url="/openapi.json" if enable_docs else None,
 )
 
 # CORS middleware for both apps
@@ -178,6 +181,43 @@ async def get_history(limit: int = 50):
 
 # Include v1 router in API app
 api_app.include_router(api_v1_router)
+
+# Manually serve docs at /v1/docs since FastAPI's automatic docs don't work well
+# with custom paths in mounted apps. We'll use the same OpenAPI schema but serve
+# it at the versioned path.
+if enable_docs:
+    from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+    from fastapi.openapi.utils import get_openapi
+    
+    @api_app.get("/v1/docs", include_in_schema=False)
+    async def custom_swagger_ui_html():
+        """Serve Swagger UI at /api/v1/docs"""
+        return get_swagger_ui_html(
+            openapi_url="/v1/openapi.json",
+            title=f"{api_app.title} - Swagger UI",
+        )
+    
+    @api_app.get("/v1/redoc", include_in_schema=False)
+    async def custom_redoc_html():
+        """Serve ReDoc at /api/v1/redoc"""
+        return get_redoc_html(
+            openapi_url="/v1/openapi.json",
+            title=f"{api_app.title} - ReDoc",
+        )
+    
+    @api_app.get("/v1/openapi.json", include_in_schema=False)
+    async def get_openapi_endpoint():
+        """Serve OpenAPI schema at /api/v1/openapi.json"""
+        if api_app.openapi_schema:
+            return api_app.openapi_schema
+        openapi_schema = get_openapi(
+            title=api_app.title,
+            version=api_version,
+            description="Terminal API - Web-based terminal emulator",
+            routes=api_app.routes,
+        )
+        api_app.openapi_schema = openapi_schema
+        return openapi_schema
 
 # Mount API app at /api prefix
 app.mount("/api", api_app)
