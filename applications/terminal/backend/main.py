@@ -6,7 +6,17 @@ import os
 from datetime import datetime
 from database import get_db, init_db, save_command_history, get_command_history
 
-app = FastAPI(title="Terminal API", version="1.0.0")
+# Enable docs only in development (when ENABLE_DOCS=true)
+# In production, docs are disabled for security
+enable_docs = os.getenv("ENABLE_DOCS", "false").lower() == "true"
+
+app = FastAPI(
+    title="Terminal API",
+    version="1.0.0",
+    docs_url="/docs" if enable_docs else None,
+    redoc_url="/redoc" if enable_docs else None,
+    openapi_url="/openapi.json" if enable_docs else None,
+)
 
 # CORS middleware
 app.add_middleware(
