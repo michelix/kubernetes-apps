@@ -151,14 +151,13 @@ Swap:          2.0G          0B        2.0G"""
 root         1  0.0  0.1  12345  1234 ?        Ss   10:00   0:01 /sbin/init
 web-user  1234  0.1  0.2  23456  2345 ?        S    10:05   0:02 node server.js"""
         else:
-            # Save command to history
-            save_command_history(command, "Command executed")
+            # For unknown commands, just return a message
             output = f"Command '{command}' executed successfully"
     except Exception as e:
         error = str(e)
         output = ""
     
-    # Save to database
+    # Save to database (only once, after command execution)
     try:
         save_command_history(command, output if not error else error)
     except Exception as e:
