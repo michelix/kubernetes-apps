@@ -1,10 +1,13 @@
-from fastapi import FastAPI, HTTPException, APIRouter
+from fastapi import FastAPI, HTTPException, APIRouter, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, field_validator
 from typing import Optional
 import os
 import subprocess
 import logging
+import re
 from datetime import datetime
 from database import get_db, init_db, save_command_history, get_command_history
 
@@ -15,6 +18,11 @@ logger = logging.getLogger(__name__)
 # Enable docs only in development (when ENABLE_DOCS=true)
 # In production, docs are disabled for security
 enable_docs = os.getenv("ENABLE_DOCS", "false").lower() == "true"
+
+# Control error detail level (for security)
+# Set to "true" to show detailed errors (development only)
+# Set to "false" to show generic errors (production)
+show_detailed_errors = os.getenv("SHOW_DETAILED_ERRORS", "false").lower() == "true"
 
 # Get version from environment variable, build arg, or default
 # Priority: 1. API_VERSION env var, 2. Build-time VERSION file, 3. Default
@@ -83,6 +91,52 @@ cors_config = {
 app.add_middleware(CORSMiddleware, **cors_config)
 api_app.add_middleware(CORSMiddleware, **cors_config)
 
+# Custom exception handler to sanitize error messages for security
+@api_app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle validation errors - sanitize messages to prevent information disclosure"""
+    if show_detailed_errors:
+        # Development mode: show detailed errors
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={"detail": exc.errors()}
+        )
+    else:
+        # Production mode: show generic error
+        logger.warning(f"Validation error from {request.client.host}: {exc.errors()}")
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": "Invalid input provided"}
+        )
+
+@api_app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Handle HTTP exceptions - sanitize messages for security"""
+    if show_detailed_errors:
+        # Development mode: show original error
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail}
+        )
+    else:
+        # Production mode: show generic error based on status code
+        logger.warning(f"HTTP {exc.status_code} from {request.client.host}: {exc.detail}")
+        if exc.status_code == 400:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Invalid request"}
+            )
+        elif exc.status_code == 500:
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Internal server error"}
+            )
+        else:
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"detail": "An error occurred"}
+            )
+
 # Initialize database on startup
 @api_app.on_event("startup")
 async def startup_event():
@@ -91,6 +145,28 @@ async def startup_event():
 class CommandRequest(BaseModel):
     command: str
     session_id: Optional[str] = None  # Optional session ID for history isolation
+    
+    @field_validator('session_id')
+    @classmethod
+    def validate_session_id(cls, v: Optional[str]) -> Optional[str]:
+        """Validate session_id format and length to prevent injection attacks"""
+        if v is None:
+            return v
+        # Session ID should be alphanumeric with underscores/hyphens, max 100 chars
+        if len(v) > 100:
+            raise ValueError("session_id must be 100 characters or less")
+        # Allow alphanumeric, underscore, hyphen, and dot (for session_ prefix)
+        if not re.match(r'^[a-zA-Z0-9_.-]+$', v):
+            raise ValueError("session_id contains invalid characters")
+        return v
+    
+    @field_validator('command')
+    @classmethod
+    def validate_command(cls, v: str) -> str:
+        """Validate command length to prevent abuse"""
+        if len(v) > 500:
+            raise ValueError("command must be 500 characters or less")
+        return v.strip()
 
 class CommandResponse(BaseModel):
     output: str
@@ -112,7 +188,8 @@ async def execute_command(request: CommandRequest):
     Execute a terminal command and return the output.
     Commands are executed in a safe, sandboxed environment.
     """
-    command = request.command.strip()
+    # Command is already validated and stripped by Pydantic validator
+    command = request.command
     logger.info(f"Execute endpoint called with command: {command}")
     
     if not command:
@@ -176,6 +253,17 @@ async def get_history(session_id: Optional[str] = None, limit: int = 50):
         logger.warning("History endpoint called without session_id, returning empty history")
         return {"history": []}
     
+    # Validate session_id format (same validation as CommandRequest)
+    if len(session_id) > 100 or not re.match(r'^[a-zA-Z0-9_.-]+$', session_id):
+        logger.warning(f"Invalid session_id format received: {session_id[:20]}...")
+        # Use generic error message to prevent information disclosure
+        error_detail = "Invalid session_id format" if show_detailed_errors else "Invalid request"
+        raise HTTPException(status_code=400, detail=error_detail)
+    
+    # Validate limit to prevent abuse
+    if limit < 1 or limit > 1000:
+        limit = 50  # Default to 50 if invalid
+    
     logger.info(f"History endpoint called with session_id={session_id[:8]}... and limit={limit}")
     try:
         history = get_command_history(session_id, limit)
@@ -183,7 +271,9 @@ async def get_history(session_id: Optional[str] = None, limit: int = 50):
         return {"history": history}
     except Exception as e:
         logger.error(f"Error retrieving history: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        # Don't expose internal error details to users
+        error_detail = str(e) if show_detailed_errors else "Internal server error"
+        raise HTTPException(status_code=500, detail=error_detail)
 
 # Include v1 router in API app
 api_app.include_router(api_v1_router)

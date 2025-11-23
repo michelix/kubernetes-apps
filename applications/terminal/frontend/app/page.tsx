@@ -155,9 +155,29 @@ export default function Terminal() {
           output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history'
         }
       } catch (error: any) {
-        // Fallback to local history on error
-        output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history'
-        console.error('Error fetching history from backend:', error)
+        // Handle errors from history endpoint
+        // Note: Backend sanitizes error messages in production
+        if (error.response) {
+          const status = error.response.status
+          const detail = error.response.data?.detail
+          
+          if (status === 400) {
+            // Validation error - show generic message (backend sanitizes details)
+            output = `Error: ${detail || 'Invalid request'}`
+          } else if (status === 500) {
+            // Server error - fallback to local history
+            output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history (server error)'
+            console.error('Error fetching history from backend:', error)
+          } else {
+            // Other errors - fallback to local history
+            output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history'
+            console.error('Error fetching history from backend:', error)
+          }
+        } else {
+          // Network error - fallback to local history
+          output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history (connection error)'
+          console.error('Error fetching history from backend:', error)
+        }
       }
     } else if (trimmedCommand === 'neofetch') {
       output = NEOFETCH_OUTPUT
@@ -179,7 +199,27 @@ Version: 1.0.0`
         })
         output = response.data.output || response.data.error || 'Command executed'
       } catch (error: any) {
-        output = `Error: ${error.response?.data?.detail || error.message || 'Unknown error'}`
+        // Handle different error types
+        // Note: Backend sanitizes error messages in production to prevent information disclosure
+        if (error.response) {
+          // Backend returned an error response (400, 500, etc.)
+          const status = error.response.status
+          const detail = error.response.data?.detail
+          
+          if (status === 400 || status === 422) {
+            // Validation error - show generic message (backend sanitizes details)
+            output = `Error: ${detail || 'Invalid input provided'}`
+          } else if (status === 500) {
+            // Server error - show generic message
+            output = `Error: ${detail || 'Internal server error'}`
+          } else {
+            // Other errors
+            output = `Error: ${detail || 'An error occurred'}`
+          }
+        } else {
+          // Network error or other issue
+          output = `Error: ${error.message || 'Failed to connect to server'}`
+        }
       }
     }
 
