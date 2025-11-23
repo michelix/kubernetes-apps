@@ -54,14 +54,31 @@ const HELP_TEXT = `Available commands:
 
 Type a command and press Enter to execute.`
 
+// Generate or retrieve session ID from localStorage
+function getSessionId(): string {
+  if (typeof window === 'undefined') return ''
+  const stored = localStorage.getItem('terminal_session_id')
+  if (stored) return stored
+  // Generate a new session ID (UUID-like)
+  const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+  localStorage.setItem('terminal_session_id', sessionId)
+  return sessionId
+}
+
 export default function Terminal() {
   const [history, setHistory] = useState<CommandHistory[]>([])
   const [currentInput, setCurrentInput] = useState('')
   const [showCursor, setShowCursor] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [showLogo, setShowLogo] = useState(false)
+  const [sessionId, setSessionId] = useState<string>('')
   const terminalRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Initialize session ID on mount
+  useEffect(() => {
+    setSessionId(getSessionId())
+  }, [])
 
   // Cursor blink effect
   useEffect(() => {
@@ -119,10 +136,15 @@ export default function Terminal() {
     } else if (trimmedCommand === 'pwd') {
       output = '/home/web-user'
     } else if (trimmedCommand === 'history') {
-      // Fetch history from backend database
+      // Fetch history from backend database for this session
       try {
         const historyEndpoint = API_URL.startsWith('/') ? `${API_URL}/v1/history` : `${API_URL}/api/v1/history`
-        const response = await axios.get(historyEndpoint, { params: { limit: 50 } })
+        const response = await axios.get(historyEndpoint, { 
+          params: { 
+            session_id: sessionId,
+            limit: 50 
+          } 
+        })
         const backendHistory = response.data.history || []
         if (backendHistory.length > 0) {
           output = backendHistory.map((h: any, i: number) => 
@@ -153,6 +175,7 @@ Version: 1.0.0`
         const apiEndpoint = API_URL.startsWith('/') ? `${API_URL}/v1/execute` : `${API_URL}/api/v1/execute`
         const response = await axios.post(apiEndpoint, {
           command: trimmedCommand,
+          session_id: sessionId,
         })
         output = response.data.output || response.data.error || 'Command executed'
       } catch (error: any) {

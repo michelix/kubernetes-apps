@@ -18,6 +18,7 @@ class CommandHistory(Base):
     __tablename__ = "command_history"
     
     id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String(100), nullable=False, index=True)  # Session identifier for user isolation
     command = Column(String(500), nullable=False)
     output = Column(Text, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -34,11 +35,12 @@ def get_db():
     finally:
         db.close()
 
-def save_command_history(command: str, output: str):
-    """Save command to history"""
+def save_command_history(session_id: str, command: str, output: str):
+    """Save command to history for a specific session"""
     db = SessionLocal()
     try:
         history_entry = CommandHistory(
+            session_id=session_id,
             command=command,
             output=output,
             timestamp=datetime.utcnow()
@@ -51,11 +53,14 @@ def save_command_history(command: str, output: str):
     finally:
         db.close()
 
-def get_command_history(limit: int = 50):
-    """Get command history"""
+def get_command_history(session_id: str, limit: int = 50):
+    """Get command history for a specific session"""
     db = SessionLocal()
     try:
-        history = db.query(CommandHistory).order_by(CommandHistory.timestamp.desc()).limit(limit).all()
+        history = db.query(CommandHistory)\
+            .filter(CommandHistory.session_id == session_id)\
+            .order_by(CommandHistory.timestamp.desc())\
+            .limit(limit).all()
         return [
             {
                 "id": h.id,

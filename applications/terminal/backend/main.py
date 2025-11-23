@@ -90,6 +90,7 @@ async def startup_event():
 
 class CommandRequest(BaseModel):
     command: str
+    session_id: Optional[str] = None  # Optional session ID for history isolation
 
 class CommandResponse(BaseModel):
     output: str
@@ -158,21 +159,27 @@ web-user  1234  0.1  0.2  23456  2345 ?        S    10:05   0:02 node server.js"
         output = ""
     
     # Save to database (only once, after command execution)
-    try:
-        save_command_history(command, output if not error else error)
-    except Exception as e:
-        # Log error but don't fail the request
-        print(f"Error saving to database: {e}")
+    # Only save if session_id is provided (for session-based history)
+    if request.session_id:
+        try:
+            save_command_history(request.session_id, command, output if not error else error)
+        except Exception as e:
+            # Log error but don't fail the request
+            logger.error(f"Error saving to database: {e}")
     
     return CommandResponse(output=output, error=error)
 
 @api_v1_router.get("/history")
-async def get_history(limit: int = 50):
-    """Get command history from database"""
-    logger.info(f"History endpoint called with limit={limit}")
+async def get_history(session_id: Optional[str] = None, limit: int = 50):
+    """Get command history from database for a specific session"""
+    if not session_id:
+        logger.warning("History endpoint called without session_id, returning empty history")
+        return {"history": []}
+    
+    logger.info(f"History endpoint called with session_id={session_id[:8]}... and limit={limit}")
     try:
-        history = get_command_history(limit)
-        logger.info(f"Retrieved {len(history)} history entries from database")
+        history = get_command_history(session_id, limit)
+        logger.info(f"Retrieved {len(history)} history entries for session")
         return {"history": history}
     except Exception as e:
         logger.error(f"Error retrieving history: {e}", exc_info=True)
