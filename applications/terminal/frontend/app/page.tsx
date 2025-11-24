@@ -13,28 +13,29 @@ interface CommandHistory {
 }
 
 const NEOFETCH_OUTPUT = `                    
-web-user@terminal
----------------
-                11111111                 OS: Kubernetes Terminal
-            7113590000953111             Host: Terminal Web App
-        111348888800808888853111         Kernel: Next.js 14
-    71359888888888077088888888895315     Uptime: Just started
-   7488000088000000770000008800008905    Packages: npm + pip
-   38880770000777777777777000077088847   Shell: web-terminal
-  148880077777770007700077777770088883   Resolution: Browser
-  4888880007777000077000077770008888841  DE: Web Browser
- 38888880077037777777777773077008888893  WM: Not applicable
- 588888807760000727777370000877088888847 Theme: Dark
-3888800007700577721001377720077000088881 Icons: Terminal
-1888087777777777777777777777777777808881 Font: Courier New
-1888095000775000077777700000770006908881 CPU: Browser Engine
-7598800080077700778000770077700800088841 GPU: WebGL
-  348888800007777700007777730008888842   Memory: Dynamic
-   7248888800077777777777700088888437    
-     148888807700000000007708888841      
-      7348880200088888800030888427       
-        134800008888888880008951         
-          71111111111111111111           
+                 ----                                  web-user@terminal
+        ===      ====      ===                         ---------------
+       ====      ====      ====                        OS: Kubernetes Terminal
+        ====     ====     ====                        Host: Terminal Web App
+        +++++    ++++    +++++                         Kernel: Next.js 14
++++      ++++    ++++    ++++      +++                 Uptime: Just started
++++++     ++++   ++++   ++++     +++++                 Packages: npm + pip
+ +++++*   ++++   ++++   ++++   *+++++                  Shell: web-terminal
+   *****  *****  ****  *****  *****                   Resolution: Browser
+    *****  ****  ****  ****  *****                    DE: Web Browser
+     ****  ****  ****  ****  ****                     WM: Not applicable
+      ***  ****  ****  ****  ***                      Theme: Dark
+     ****  ****  ****  ****  ****                     Icons: Terminal
+    *****  ****  ****  ****  *****                    Font: Courier New
+   ****#  #****  ****  *****  #****#                   CPU: Browser Engine
+ #***##   #***   ***#   #***   ##***#                  GPU: WebGL
+#####     ####   ####   ####     #####                 Memory: Dynamic
+###      ####    ####    ####      ###                 
+        #####    ####    #####                         
+        ####     ####     ####                         
+       ####      ####      ####                        
+        ###      ####      ###                         
+                 ####                                  
                                 
 Welcome to the Terminal
 `
@@ -245,7 +246,10 @@ Version: 1.0.0`
       }
     } else if (e.key === 'l' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
-      setHistory([])
+      // Clear screen visually (scroll to bottom) but keep history intact
+      if (terminalRef.current) {
+        terminalRef.current.scrollTop = terminalRef.current.scrollHeight
+      }
     }
   }
 
