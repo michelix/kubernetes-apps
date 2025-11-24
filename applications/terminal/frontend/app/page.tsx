@@ -13,23 +13,23 @@ interface CommandHistory {
 }
 
 const NEOFETCH_OUTPUT = `                    
-                 ----                                  web-user@terminal
-        ===      ====      ===                         ---------------
-       ====      ====      ====                        OS: Kubernetes Terminal
-        ====     ====     ====                        Host: Terminal Web App
-        +++++    ++++    +++++                         Kernel: Next.js 14
-+++      ++++    ++++    ++++      +++                 Uptime: Just started
-+++++     ++++   ++++   ++++     +++++                 Packages: npm + pip
- +++++*   ++++   ++++   ++++   *+++++                  Shell: web-terminal
-   *****  *****  ****  *****  *****                   Resolution: Browser
-    *****  ****  ****  ****  *****                    DE: Web Browser
-     ****  ****  ****  ****  ****                     WM: Not applicable
-      ***  ****  ****  ****  ***                      Theme: Dark
-     ****  ****  ****  ****  ****                     Icons: Terminal
-    *****  ****  ****  ****  *****                    Font: Courier New
-   ****#  #****  ****  *****  #****#                   CPU: Browser Engine
- #***##   #***   ***#   #***   ##***#                  GPU: WebGL
-#####     ####   ####   ####     #####                 Memory: Dynamic
+                 ----                         web-user@terminal
+        ===      ====      ===                ---------------
+       ====      ====      ====               OS: Talos Kubernetes Terminal
+        ====     ====     ====                Host: Terminal Web App
+        +++++    ++++    +++++                Kernel: Next.js 14
++++      ++++    ++++    ++++      +++        Uptime: Just started
++++++     ++++   ++++   ++++     +++++        Packages: npm + pip
+ +++++*   ++++   ++++   ++++   *+++++         Shell: web-terminal
+   *****  *****  ****  *****  *****           Resolution: Browser
+    *****  ****  ****  ****  *****            DE: Web Browser
+     ****  ****  ****  ****  ****             WM: Not applicable
+      ***  ****  ****  ****  ***              Theme: Dark
+     ****  ****  ****  ****  ****             Icons: Terminal
+    *****  ****  ****  ****  *****            Font: Courier New
+   ****#  #****  ****  *****  #****#          CPU: Browser Engine
+ #***##   #***   ***#   #***   ##***#         GPU: WebGL
+#####     ####   ####   ####     #####        Memory: Dynamic
 ###      ####    ####    ####      ###                 
         #####    ####    #####                         
         ####     ####     ####                         
