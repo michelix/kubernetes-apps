@@ -73,6 +73,7 @@ export default function Terminal() {
   const [isLoading, setIsLoading] = useState(false)
   const [showLogo, setShowLogo] = useState(false)
   const [sessionId, setSessionId] = useState<string>('')
+  const [displayStartIndex, setDisplayStartIndex] = useState(0)
   const terminalRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -123,6 +124,7 @@ export default function Terminal() {
     // Handle local commands
     if (trimmedCommand === 'clear') {
       setHistory([])
+      setDisplayStartIndex(0)
       return
     } else if (trimmedCommand === 'help') {
       output = HELP_TEXT
@@ -246,7 +248,9 @@ Version: 1.0.0`
       }
     } else if (e.key === 'l' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
-      // Clear screen visually (scroll to bottom) but keep history intact
+      // Clear screen visually by hiding all current history, but keep history intact
+      setDisplayStartIndex(history.length)
+      // Scroll to bottom
       if (terminalRef.current) {
         terminalRef.current.scrollTop = terminalRef.current.scrollHeight
       }
@@ -286,8 +290,8 @@ Version: 1.0.0`
         </pre>
       )}
 
-      {history.map((item, index) => (
-        <div key={index} style={{ marginBottom: '10px' }}>
+      {history.slice(displayStartIndex).map((item, index) => (
+        <div key={displayStartIndex + index} style={{ marginBottom: '10px' }}>
           {item.command && (
             <div style={{ marginBottom: '5px' }}>
               <span style={{ color: '#00ff00' }}>web-user@terminal</span>
