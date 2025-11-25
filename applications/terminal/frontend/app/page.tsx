@@ -74,6 +74,7 @@ export default function Terminal() {
   const [showLogo, setShowLogo] = useState(false)
   const [sessionId, setSessionId] = useState<string>('')
   const [displayStartIndex, setDisplayStartIndex] = useState(0)
+  const [historyIndex, setHistoryIndex] = useState<number>(-1)
   const terminalRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -240,11 +241,45 @@ Version: 1.0.0`
     if (e.key === 'Enter') {
       executeCommand(currentInput)
       setCurrentInput('')
+      setHistoryIndex(-1) // Reset history index after executing command
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      const lastCommand = history.filter((h) => h.command).pop()?.command
-      if (lastCommand) {
-        setCurrentInput(lastCommand)
+      // Get all commands from history (filter out empty commands)
+      const commands = history.filter((h) => h.command).map((h) => h.command)
+      
+      if (commands.length === 0) return
+      
+      // If at the start (index -1), start from the last command
+      if (historyIndex === -1) {
+        setHistoryIndex(commands.length - 1)
+        setCurrentInput(commands[commands.length - 1])
+      } else if (historyIndex > 0) {
+        // Go to previous command
+        const newIndex = historyIndex - 1
+        setHistoryIndex(newIndex)
+        setCurrentInput(commands[newIndex])
+      }
+      // If historyIndex === 0, stay at the first command
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      // Get all commands from history (filter out empty commands)
+      const commands = history.filter((h) => h.command).map((h) => h.command)
+      
+      if (commands.length === 0 || historyIndex === -1) {
+        // If at the end or no history, clear input
+        setCurrentInput('')
+        return
+      }
+      
+      if (historyIndex < commands.length - 1) {
+        // Go to next command
+        const newIndex = historyIndex + 1
+        setHistoryIndex(newIndex)
+        setCurrentInput(commands[newIndex])
+      } else {
+        // At the end, clear input and reset index
+        setCurrentInput('')
+        setHistoryIndex(-1)
       }
     } else if (e.key === 'l' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
