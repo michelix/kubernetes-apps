@@ -181,6 +181,25 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
+# Redirect docs paths to /api/docs (where api_app docs are mounted)
+if enable_docs:
+    from fastapi.responses import RedirectResponse
+    
+    @app.get("/docs", include_in_schema=False)
+    async def redirect_docs():
+        """Redirect /docs to /api/docs"""
+        return RedirectResponse(url="/api/docs")
+    
+    @app.get("/redoc", include_in_schema=False)
+    async def redirect_redoc():
+        """Redirect /redoc to /api/redoc"""
+        return RedirectResponse(url="/api/redoc")
+    
+    @app.get("/openapi.json", include_in_schema=False)
+    async def redirect_openapi():
+        """Redirect /openapi.json to /api/openapi.json"""
+        return RedirectResponse(url="/api/openapi.json")
+
 # API v1 endpoints
 @api_v1_router.post("/execute", response_model=CommandResponse)
 async def execute_command(request: CommandRequest):
@@ -278,36 +297,8 @@ async def get_history(session_id: Optional[str] = None, limit: int = 50):
 # Include v1 router in API app
 api_app.include_router(api_v1_router)
 
-# Manually serve docs at /v1/docs since FastAPI's automatic docs don't work well
-# with custom paths in mounted apps. We'll use FastAPI's built-in openapi() method
-# to get the correct schema with all routes included.
-if enable_docs:
-    from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
-    from fastapi.responses import JSONResponse
-    
-    @api_app.get("/v1/docs", include_in_schema=False)
-    async def custom_swagger_ui_html():
-        """Serve Swagger UI at /api/v1/docs"""
-        return get_swagger_ui_html(
-            openapi_url="/v1/openapi.json",
-            title=f"{api_app.title} - Swagger UI",
-        )
-    
-    @api_app.get("/v1/redoc", include_in_schema=False)
-    async def custom_redoc_html():
-        """Serve ReDoc at /api/v1/redoc"""
-        return get_redoc_html(
-            openapi_url="/v1/openapi.json",
-            title=f"{api_app.title} - ReDoc",
-        )
-    
-    @api_app.get("/v1/openapi.json", include_in_schema=False)
-    async def get_openapi_endpoint():
-        """Serve OpenAPI schema at /api/v1/openapi.json"""
-        # Use FastAPI's built-in openapi() method to get the schema with all routes
-        return JSONResponse(api_app.openapi())
-
 # Mount API app at /api prefix
+# FastAPI's built-in docs are available at /api/docs, /api/redoc, /api/openapi.json
 app.mount("/api", api_app)
 
 if __name__ == "__main__":
