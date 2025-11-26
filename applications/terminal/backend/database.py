@@ -1,8 +1,11 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Database configuration
 DATABASE_URL = os.getenv(
@@ -25,10 +28,18 @@ class CommandHistory(Base):
 
 def init_db():
     """Initialize database tables - drops and recreates tables to ensure clean schema"""
-    # Drop all tables first (data will be lost)
-    Base.metadata.drop_all(bind=engine)
-    # Create tables with fresh schema
-    Base.metadata.create_all(bind=engine)
+    try:
+        logger.info("Dropping existing tables...")
+        # Explicitly drop the command_history table if it exists (using raw SQL for reliability)
+        with engine.begin() as conn:
+            conn.execute(text("DROP TABLE IF EXISTS command_history CASCADE"))
+        logger.info("Creating fresh tables with new schema...")
+        # Create tables with fresh schema
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database initialization completed successfully")
+    except Exception as e:
+        logger.error(f"Error during database initialization: {e}", exc_info=True)
+        raise
 
 def get_db():
     """Get database session"""
