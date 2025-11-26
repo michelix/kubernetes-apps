@@ -75,12 +75,31 @@ export default function Terminal() {
   const [sessionId, setSessionId] = useState<string>('')
   const [displayStartIndex, setDisplayStartIndex] = useState(0)
   const [historyIndex, setHistoryIndex] = useState<number>(-1)
+  const [backendVersion, setBackendVersion] = useState<string | null>(null)
   const terminalRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Initialize session ID on mount
   useEffect(() => {
     setSessionId(getSessionId())
+  }, [])
+
+  // Fetch backend version from API root
+  useEffect(() => {
+    const fetchVersion = async () => {
+      try {
+        const response = await axios.get(API_URL)
+        const version = response.data?.version
+        if (version) {
+          setBackendVersion(version)
+        }
+      } catch (error) {
+        // Don't break the UI if version fetch fails
+        console.error('Error fetching backend version:', error)
+      }
+    }
+
+    fetchVersion()
   }, [])
 
   // Cursor blink effect
@@ -184,12 +203,14 @@ export default function Terminal() {
         }
       }
     } else if (trimmedCommand === 'neofetch') {
-      output = NEOFETCH_OUTPUT
+      // Show ASCII logo plus backend version (if available)
+      const versionText = backendVersion ? `\nVersion: ${backendVersion}` : ''
+      output = `${NEOFETCH_OUTPUT}${versionText}`
     } else if (trimmedCommand === 'about') {
       output = `Terminal Web Application
 Built with Next.js, FastAPI, and PostgreSQL
 Running on Kubernetes with ArgoCD
-Version: 1.0.0`
+Version: ${backendVersion ?? 'unknown (backend version not available)'}` as string
     } else if (trimmedCommand === 'exit') {
       window.location.reload()
       return
