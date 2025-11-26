@@ -150,8 +150,8 @@ class CommandRequest(BaseModel):
     @classmethod
     def validate_session_id(cls, v: Optional[str]) -> Optional[str]:
         """Validate session_id format and length to prevent injection attacks"""
-        if v is None:
-            return v
+        if v is None or v == "":
+            return None
         # Session ID should be alphanumeric with underscores/hyphens, max 100 chars
         if len(v) > 100:
             raise ValueError("session_id must be 100 characters or less")
