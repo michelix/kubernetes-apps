@@ -19,7 +19,7 @@ spec:
       containers:
       - name: frontend
         # Image tag will be automatically updated by CI/CD workflow
-        image: docker.io/michelix/terminal-frontend:32459c6
+        image: docker.io/michelix/terminal-frontend:0b64cd7
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
