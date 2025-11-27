@@ -7,6 +7,7 @@ on:
     paths:
       - 'applications/terminal/frontend/**'
       - 'applications/terminal/backend/**'
+      - 'applications/terminal/manifests/**'
       - '.github/workflows/terminal-build-deploy.yml'
   workflow_dispatch:
 
