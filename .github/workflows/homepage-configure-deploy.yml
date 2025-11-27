@@ -54,13 +54,18 @@ jobs:
             git fetch origin deploy
             git checkout deploy
             # Merge latest from main to keep deploy branch updated
-            if ! git merge main --no-edit --no-ff 2>/dev/null; then
-              echo "Merge conflict detected, resolving..."
-              # Abort the merge
-              git merge --abort
-              # Get latest homepage files from main (we'll reconfigure them anyway)
-              git checkout main -- applications/homepage/ 2>/dev/null || true
-              echo "✅ Updated homepage files from main branch"
+            # Use --strategy-option=theirs to prefer main's version in case of conflicts
+            if ! git merge main --no-edit --no-ff -X theirs 2>&1; then
+              echo "⚠️  Merge had conflicts or issues, but continuing..."
+              # Check if we're in a conflicted state
+              if [ -n "$(git ls-files -u)" ]; then
+                echo "Resolving conflicts by preferring main branch..."
+                git checkout --theirs .
+                git add -A
+                git commit -m "chore(homepage): merge main into deploy (conflicts resolved)"
+              fi
+            else
+              echo "✅ Successfully merged main into deploy"
             fi
           else
             echo "Creating new deploy branch from main"
@@ -106,22 +111,29 @@ jobs:
           
           echo "✅ Configuration applied successfully"
 
-      - name: Check for manifest changes
-        id: check-manifests
+      - name: Check for changes
+        id: check-changes
         run: |
-          git add applications/homepage/manifests/*.yaml applications/homepage/application.yaml
-          if git diff --staged --quiet; then
+          # Stage all changes (including merge from main and configuration updates)
+          git add -A
+          if git diff --staged --quiet && git diff --quiet; then
             echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
-            echo "ℹ️  No manifest changes needed"
+            echo "ℹ️  No changes detected"
           else
             echo "HAS_CHANGES=true" >> $GITHUB_OUTPUT
-            echo "📝 Manifest changes detected"
+            echo "📝 Changes detected (merge from main and/or configuration updates)"
+            git status
           fi
 
-      - name: Commit configured manifests to deploy branch
-        if: steps.check-manifests.outputs.HAS_CHANGES == 'true'
+      - name: Commit and push changes to deploy branch
+        if: steps.check-changes.outputs.HAS_CHANGES == 'true'
         run: |
-          git commit -m "chore(homepage): configure with domain ${{ secrets.DOMAIN }}"
+          # Check if we have uncommitted changes (merge might have already created a commit)
+          if ! git diff --quiet || ! git diff --cached --quiet; then
+            # We have uncommitted changes, commit them
+            git commit -m "chore(homepage): sync from main and configure with domain ${{ secrets.DOMAIN }}"
+          fi
+          # Push all commits (including merge commit if it was created)
           git push origin deploy
 
       - name: Output deployment info
