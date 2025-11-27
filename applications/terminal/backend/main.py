@@ -1,49 +1,215 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, APIRouter, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, field_validator
 from typing import Optional
 import os
+import subprocess
+import logging
+import re
 from datetime import datetime
 from database import get_db, init_db, save_command_history, get_command_history
 
-app = FastAPI(title="Terminal API", version="1.0.0")
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend domain
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+# Enable docs only in development (when ENABLE_DOCS=true)
+# In production, docs are disabled for security
+enable_docs = os.getenv("ENABLE_DOCS", "false").lower() == "true"
+
+# Control error detail level (for security)
+# Set to "true" to show detailed errors (development only)
+# Set to "false" to show generic errors (production)
+show_detailed_errors = os.getenv("SHOW_DETAILED_ERRORS", "false").lower() == "true"
+
+# Get version from environment variable, build arg, or default
+# Priority: 1. API_VERSION env var, 2. Build-time VERSION file, 3. Default
+def get_version():
+    # Try environment variable first (can be set at runtime or build time)
+    version = os.getenv("API_VERSION")
+    if version:
+        return version
+    
+    # Try to read from build-time VERSION file (created during Docker build)
+    try:
+        version_file = os.path.join(os.path.dirname(__file__), "VERSION")
+        if os.path.exists(version_file):
+            with open(version_file, "r") as f:
+                version = f.read().strip()
+                if version:
+                    return version
+    except Exception:
+        pass
+    
+    # Try to get version from git tag (for local development)
+    try:
+        result = subprocess.run(
+            ["git", "describe", "--tags", "--always"],
+            capture_output=True,
+            text=True,
+            timeout=1,
+            cwd=os.path.dirname(__file__)
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+        pass
+    
+    # Default version
+    return "1.0.0"
+
+api_version = get_version()
+
+# Create main FastAPI app (root level for health checks)
+app = FastAPI(title="Terminal API", version=api_version)
+
+# Create API v1 router
+api_v1_router = APIRouter(prefix="/v1", tags=["v1"])
+
+# Create sub-app for API with docs enabled/disabled
+# When api_app is mounted at /api, requests to /api/* become /* in the mounted app
+# So docs_url="/docs" means docs are at /api/docs from main app
+# To have docs at /api/v1/docs, we need to use root_path or mount differently
+# Actually, FastAPI docs are app-level, so we'll put them at /api/docs and add a redirect
+api_app = FastAPI(
+    title="Terminal API",
+    version=api_version,
+    docs_url="/docs" if enable_docs else None,
+    redoc_url="/redoc" if enable_docs else None,
+    openapi_url="/openapi.json" if enable_docs else None,
 )
 
+# CORS middleware for both apps
+cors_config = {
+    "allow_origins": ["*"],  # In production, specify your frontend domain
+    "allow_credentials": True,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+}
+app.add_middleware(CORSMiddleware, **cors_config)
+api_app.add_middleware(CORSMiddleware, **cors_config)
+
+# Custom exception handler to sanitize error messages for security
+@api_app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle validation errors - sanitize messages to prevent information disclosure"""
+    if show_detailed_errors:
+        # Development mode: show detailed errors
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={"detail": exc.errors()}
+        )
+    else:
+        # Production mode: show generic error
+        logger.warning(f"Validation error from {request.client.host}: {exc.errors()}")
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": "Invalid input provided"}
+        )
+
+@api_app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Handle HTTP exceptions - sanitize messages for security"""
+    if show_detailed_errors:
+        # Development mode: show original error
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail}
+        )
+    else:
+        # Production mode: show generic error based on status code
+        logger.warning(f"HTTP {exc.status_code} from {request.client.host}: {exc.detail}")
+        if exc.status_code == 400:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Invalid request"}
+            )
+        elif exc.status_code == 500:
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Internal server error"}
+            )
+        else:
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"detail": "An error occurred"}
+            )
+
 # Initialize database on startup
-@app.on_event("startup")
+@api_app.on_event("startup")
 async def startup_event():
     init_db()
 
 class CommandRequest(BaseModel):
     command: str
+    session_id: Optional[str] = None  # Optional session ID for history isolation
+    
+    @field_validator('session_id')
+    @classmethod
+    def validate_session_id(cls, v: Optional[str]) -> Optional[str]:
+        """Validate session_id format and length to prevent injection attacks"""
+        if v is None or v == "":
+            return None
+        # Session ID should be alphanumeric with underscores/hyphens, max 100 chars
+        if len(v) > 100:
+            raise ValueError("session_id must be 100 characters or less")
+        # Allow alphanumeric, underscore, hyphen, and dot (for session_ prefix)
+        if not re.match(r'^[a-zA-Z0-9_.-]+$', v):
+            raise ValueError("session_id contains invalid characters")
+        return v
+    
+    @field_validator('command')
+    @classmethod
+    def validate_command(cls, v: str) -> str:
+        """Validate command length to prevent abuse"""
+        if len(v) > 500:
+            raise ValueError("command must be 500 characters or less")
+        return v.strip()
 
 class CommandResponse(BaseModel):
     output: str
     error: Optional[str] = None
 
+# Root level endpoints (for health checks via ingress)
 @app.get("/")
 async def root():
-    return {"message": "Terminal API", "version": "1.0.0"}
+    return {"message": "Terminal API", "version": api_version}
 
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
-@app.post("/api/execute", response_model=CommandResponse)
+# Redirect docs paths to /api/docs (where api_app docs are mounted)
+if enable_docs:
+    from fastapi.responses import RedirectResponse
+    
+    @app.get("/docs", include_in_schema=False)
+    async def redirect_docs():
+        """Redirect /docs to /api/docs"""
+        return RedirectResponse(url="/api/docs")
+    
+    @app.get("/redoc", include_in_schema=False)
+    async def redirect_redoc():
+        """Redirect /redoc to /api/redoc"""
+        return RedirectResponse(url="/api/redoc")
+    
+    @app.get("/openapi.json", include_in_schema=False)
+    async def redirect_openapi():
+        """Redirect /openapi.json to /api/openapi.json"""
+        return RedirectResponse(url="/api/openapi.json")
+
+# API v1 endpoints
+@api_v1_router.post("/execute", response_model=CommandResponse)
 async def execute_command(request: CommandRequest):
     """
     Execute a terminal command and return the output.
     Commands are executed in a safe, sandboxed environment.
     """
-    command = request.command.strip()
+    # Command is already validated and stripped by Pydantic validator
+    command = request.command
+    logger.info(f"Execute endpoint called with command: {command}")
     
     if not command:
         return CommandResponse(output="")
@@ -82,30 +248,58 @@ Swap:          2.0G          0B        2.0G"""
 root         1  0.0  0.1  12345  1234 ?        Ss   10:00   0:01 /sbin/init
 web-user  1234  0.1  0.2  23456  2345 ?        S    10:05   0:02 node server.js"""
         else:
-            # Save command to history
-            save_command_history(command, "Command executed")
+            # For unknown commands, just return a message
             output = f"Command '{command}' executed successfully"
     except Exception as e:
         error = str(e)
         output = ""
     
-    # Save to database
-    try:
-        save_command_history(command, output if not error else error)
-    except Exception as e:
-        # Log error but don't fail the request
-        print(f"Error saving to database: {e}")
+    # Save to database (only once, after command execution)
+    # Only save if session_id is provided (for session-based history)
+    if request.session_id:
+        try:
+            save_command_history(request.session_id, command, output if not error else error)
+        except Exception as e:
+            # Log error but don't fail the request
+            logger.error(f"Error saving to database: {e}")
     
     return CommandResponse(output=output, error=error)
 
-@app.get("/api/history")
-async def get_history(limit: int = 50):
-    """Get command history from database"""
+@api_v1_router.get("/history")
+async def get_history(session_id: Optional[str] = None, limit: int = 50):
+    """Get command history from database for a specific session"""
+    if not session_id:
+        logger.warning("History endpoint called without session_id, returning empty history")
+        return {"history": []}
+    
+    # Validate session_id format (same validation as CommandRequest)
+    if len(session_id) > 100 or not re.match(r'^[a-zA-Z0-9_.-]+$', session_id):
+        logger.warning(f"Invalid session_id format received: {session_id[:20]}...")
+        # Use generic error message to prevent information disclosure
+        error_detail = "Invalid session_id format" if show_detailed_errors else "Invalid request"
+        raise HTTPException(status_code=400, detail=error_detail)
+    
+    # Validate limit to prevent abuse
+    if limit < 1 or limit > 1000:
+        limit = 50  # Default to 50 if invalid
+    
+    logger.info(f"History endpoint called with session_id={session_id[:8]}... and limit={limit}")
     try:
-        history = get_command_history(limit)
+        history = get_command_history(session_id, limit)
+        logger.info(f"Retrieved {len(history)} history entries for session")
         return {"history": history}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error retrieving history: {e}", exc_info=True)
+        # Don't expose internal error details to users
+        error_detail = str(e) if show_detailed_errors else "Internal server error"
+        raise HTTPException(status_code=500, detail=error_detail)
+
+# Include v1 router in API app
+api_app.include_router(api_v1_router)
+
+# Mount API app at /api prefix
+# FastAPI's built-in docs are available at /api/docs, /api/redoc, /api/openapi.json
+app.mount("/api", api_app)
 
 if __name__ == "__main__":
     import uvicorn

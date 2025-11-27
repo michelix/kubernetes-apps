@@ -29,9 +29,9 @@ spec:
           imagePullPolicy: Always
           env:
             - name: HOMEPAGE_HOSTNAME
-              value: "homepage.valentak.at"
+              value: "homepage.YOUR_DOMAIN"
             - name: HOMEPAGE_ALLOWED_HOSTS
-              value: "homepage.valentak.at"
+              value: "homepage.YOUR_DOMAIN"
             - name: KUBERNETES_SERVICE_HOST
               value: "kubernetes.default.svc"
             - name: KUBERNETES_SERVICE_PORT

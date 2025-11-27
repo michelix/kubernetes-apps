@@ -12,6 +12,12 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Build argument for version (defaults to "1.0.0")
+ARG VERSION=1.0.0
+
+# Create VERSION file for runtime version detection
+RUN echo "${VERSION}" > /app/VERSION
+
 # Copy application code
 COPY . .
 

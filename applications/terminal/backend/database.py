@@ -1,8 +1,11 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Database configuration
 DATABASE_URL = os.getenv(
@@ -18,13 +21,25 @@ class CommandHistory(Base):
     __tablename__ = "command_history"
     
     id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String(100), nullable=True, index=True, default="default")  # Session identifier for user isolation
     command = Column(String(500), nullable=False)
     output = Column(Text, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 def init_db():
-    """Initialize database tables"""
-    Base.metadata.create_all(bind=engine)
+    """Initialize database tables - drops and recreates tables to ensure clean schema"""
+    try:
+        logger.info("Dropping existing tables...")
+        # Explicitly drop the command_history table if it exists (using raw SQL for reliability)
+        with engine.begin() as conn:
+            conn.execute(text("DROP TABLE IF EXISTS command_history CASCADE"))
+        logger.info("Creating fresh tables with new schema...")
+        # Create tables with fresh schema
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database initialization completed successfully")
+    except Exception as e:
+        logger.error(f"Error during database initialization: {e}", exc_info=True)
+        raise
 
 def get_db():
     """Get database session"""
@@ -34,11 +49,13 @@ def get_db():
     finally:
         db.close()
 
-def save_command_history(command: str, output: str):
-    """Save command to history"""
+def save_command_history(session_id: str, command: str, output: str):
+    """Save command to history for a specific session"""
     db = SessionLocal()
     try:
+        # Use provided session_id or default
         history_entry = CommandHistory(
+            session_id=session_id if session_id else "default",
             command=command,
             output=output,
             timestamp=datetime.utcnow()
@@ -51,11 +68,16 @@ def save_command_history(command: str, output: str):
     finally:
         db.close()
 
-def get_command_history(limit: int = 50):
-    """Get command history"""
+def get_command_history(session_id: str, limit: int = 50):
+    """Get command history for a specific session"""
     db = SessionLocal()
     try:
-        history = db.query(CommandHistory).order_by(CommandHistory.timestamp.desc()).limit(limit).all()
+        # Use provided session_id or default
+        query_session_id = session_id if session_id else "default"
+        history = db.query(CommandHistory)\
+            .filter(CommandHistory.session_id == query_session_id)\
+            .order_by(CommandHistory.timestamp.desc())\
+            .limit(limit).all()
         return [
             {
                 "id": h.id,

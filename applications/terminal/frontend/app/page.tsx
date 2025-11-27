@@ -12,30 +12,32 @@ interface CommandHistory {
   timestamp: Date
 }
 
-const NEOFETCH_OUTPUT = `                    web-user@terminal
-                    ---------------
-                11111111                 OS: Kubernetes Terminal
-            7113590000953111             Host: Terminal Web App
-        111348888800808888853111         Kernel: Next.js 14
-    71359888888888077088888888895315     Uptime: Just started
-   7488000088000000770000008800008905    Packages: npm + pip
-   38880770000777777777777000077088847   Shell: web-terminal
-  148880077777770007700077777770088883   Resolution: Browser
-  4888880007777000077000077770008888841  DE: Web Browser
- 38888880077037777777777773077008888893  WM: Not applicable
- 588888807760000727777370000877088888847 Theme: Dark
-3888800007700577721001377720077000088881 Icons: Terminal
-1888087777777777777777777777777777808881 Font: Courier New
-1888095000775000077777700000770006908881 CPU: Browser Engine
-7598800080077700778000770077700800088841 GPU: WebGL
-  348888800007777700007777730008888842   Memory: Dynamic
-   7248888800077777777777700088888437    
-     148888807700000000007708888841      
-      7348880200088888800030888427       
-        134800008888888880008951         
-          71111111111111111111           
+const NEOFETCH_OUTPUT = `                    
+                 ----                         web-user@terminal
+        ===      ====      ===                ---------------
+       ====      ====      ====               OS: Talos Kubernetes Terminal
+        ====     ====     ====                Host: Terminal Web App
+        +++++    ++++    +++++                Kernel: Next.js 14
++++      ++++    ++++    ++++      +++        Uptime: Just started
++++++     ++++   ++++   ++++     +++++        Packages: npm + pip
+ +++++*   ++++   ++++   ++++   *+++++         Shell: web-terminal
+   *****  *****  ****  *****  *****           Resolution: Browser
+    *****  ****  ****  ****  *****            DE: Web Browser
+     ****  ****  ****  ****  ****             WM: Not applicable
+      ***  ****  ****  ****  ***              Theme: Dark
+     ****  ****  ****  ****  ****             Icons: Terminal
+    *****  ****  ****  ****  *****            Font: Courier New
+   ****#  #****  ****  *****  #****#          CPU: Browser Engine
+ #***##   #***   ***#   #***   ##***#         GPU: WebGL
+#####     ####   ####   ####     #####        Memory: Dynamic
+###      ####    ####    ####      ###                 
+        #####    ####    #####                         
+        ####     ####     ####                         
+       ####      ####      ####                        
+        ###      ####      ###                         
+                 ####                                  
                                 
-                    Welcome to the Terminal
+Welcome to the Terminal
 `
 
 const HELP_TEXT = `Available commands:
@@ -53,14 +55,52 @@ const HELP_TEXT = `Available commands:
 
 Type a command and press Enter to execute.`
 
+// Generate or retrieve session ID from localStorage
+function getSessionId(): string {
+  if (typeof window === 'undefined') return ''
+  const stored = localStorage.getItem('terminal_session_id')
+  if (stored) return stored
+  // Generate a new session ID (UUID-like)
+  const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+  localStorage.setItem('terminal_session_id', sessionId)
+  return sessionId
+}
+
 export default function Terminal() {
   const [history, setHistory] = useState<CommandHistory[]>([])
   const [currentInput, setCurrentInput] = useState('')
   const [showCursor, setShowCursor] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [showLogo, setShowLogo] = useState(false)
+  const [sessionId, setSessionId] = useState<string>('')
+  const [displayStartIndex, setDisplayStartIndex] = useState(0)
+  const [historyIndex, setHistoryIndex] = useState<number>(-1)
+  const [backendVersion, setBackendVersion] = useState<string | null>(null)
   const terminalRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Initialize session ID on mount
+  useEffect(() => {
+    setSessionId(getSessionId())
+  }, [])
+
+  // Fetch backend version from API root
+  useEffect(() => {
+    const fetchVersion = async () => {
+      try {
+        const response = await axios.get(API_URL)
+        const version = response.data?.version
+        if (version) {
+          setBackendVersion(version)
+        }
+      } catch (error) {
+        // Don't break the UI if version fetch fails
+        console.error('Error fetching backend version:', error)
+      }
+    }
+
+    fetchVersion()
+  }, [])
 
   // Cursor blink effect
   useEffect(() => {
@@ -104,6 +144,7 @@ export default function Terminal() {
     // Handle local commands
     if (trimmedCommand === 'clear') {
       setHistory([])
+      setDisplayStartIndex(0)
       return
     } else if (trimmedCommand === 'help') {
       output = HELP_TEXT
@@ -118,27 +159,92 @@ export default function Terminal() {
     } else if (trimmedCommand === 'pwd') {
       output = '/home/web-user'
     } else if (trimmedCommand === 'history') {
-      output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history'
+      // Fetch history from backend database for this session
+      try {
+        const historyEndpoint = API_URL.startsWith('/') ? `${API_URL}/v1/history` : `${API_URL}/api/v1/history`
+        const response = await axios.get(historyEndpoint, { 
+          params: { 
+            session_id: sessionId,
+            limit: 50 
+          } 
+        })
+        const backendHistory = response.data.history || []
+        if (backendHistory.length > 0) {
+          output = backendHistory.map((h: any, i: number) => 
+            `${i + 1}  ${h.command} (${new Date(h.timestamp).toLocaleString()})`
+          ).join('\n')
+        } else {
+          // Fallback to local history if backend has no entries
+          output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history'
+        }
+      } catch (error: any) {
+        // Handle errors from history endpoint
+        // Note: Backend sanitizes error messages in production
+        if (error.response) {
+          const status = error.response.status
+          const detail = error.response.data?.detail
+          
+          if (status === 400) {
+            // Validation error - show generic message (backend sanitizes details)
+            output = `Error: ${detail || 'Invalid request'}`
+          } else if (status === 500) {
+            // Server error - fallback to local history
+            output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history (server error)'
+            console.error('Error fetching history from backend:', error)
+          } else {
+            // Other errors - fallback to local history
+            output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history'
+            console.error('Error fetching history from backend:', error)
+          }
+        } else {
+          // Network error - fallback to local history
+          output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history (connection error)'
+          console.error('Error fetching history from backend:', error)
+        }
+      }
     } else if (trimmedCommand === 'neofetch') {
-      output = NEOFETCH_OUTPUT
+      // Show ASCII logo plus backend version (if available)
+      const versionText = backendVersion ? `\nVersion: ${backendVersion}` : ''
+      output = `${NEOFETCH_OUTPUT}${versionText}`
     } else if (trimmedCommand === 'about') {
       output = `Terminal Web Application
 Built with Next.js, FastAPI, and PostgreSQL
 Running on Kubernetes with ArgoCD
-Version: 1.0.0`
+Version: ${backendVersion ?? 'unknown (backend version not available)'}` as string
     } else if (trimmedCommand === 'exit') {
       window.location.reload()
       return
     } else {
       // Try to execute on backend
       try {
-        const apiEndpoint = API_URL.startsWith('/') ? `${API_URL}/execute` : `${API_URL}/api/execute`
+        const apiEndpoint = API_URL.startsWith('/') ? `${API_URL}/v1/execute` : `${API_URL}/api/v1/execute`
         const response = await axios.post(apiEndpoint, {
           command: trimmedCommand,
+          session_id: sessionId,
         })
         output = response.data.output || response.data.error || 'Command executed'
       } catch (error: any) {
-        output = `Error: ${error.response?.data?.detail || error.message || 'Unknown error'}`
+        // Handle different error types
+        // Note: Backend sanitizes error messages in production to prevent information disclosure
+        if (error.response) {
+          // Backend returned an error response (400, 500, etc.)
+          const status = error.response.status
+          const detail = error.response.data?.detail
+          
+          if (status === 400 || status === 422) {
+            // Validation error - show generic message (backend sanitizes details)
+            output = `Error: ${detail || 'Invalid input provided'}`
+          } else if (status === 500) {
+            // Server error - show generic message
+            output = `Error: ${detail || 'Internal server error'}`
+          } else {
+            // Other errors
+            output = `Error: ${detail || 'An error occurred'}`
+          }
+        } else {
+          // Network error or other issue
+          output = `Error: ${error.message || 'Failed to connect to server'}`
+        }
       }
     }
 
@@ -156,15 +262,54 @@ Version: 1.0.0`
     if (e.key === 'Enter') {
       executeCommand(currentInput)
       setCurrentInput('')
+      setHistoryIndex(-1) // Reset history index after executing command
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      const lastCommand = history.filter((h) => h.command).pop()?.command
-      if (lastCommand) {
-        setCurrentInput(lastCommand)
+      // Get all commands from history (filter out empty commands)
+      const commands = history.filter((h) => h.command).map((h) => h.command)
+      
+      if (commands.length === 0) return
+      
+      // If at the start (index -1), start from the last command
+      if (historyIndex === -1) {
+        setHistoryIndex(commands.length - 1)
+        setCurrentInput(commands[commands.length - 1])
+      } else if (historyIndex > 0) {
+        // Go to previous command
+        const newIndex = historyIndex - 1
+        setHistoryIndex(newIndex)
+        setCurrentInput(commands[newIndex])
+      }
+      // If historyIndex === 0, stay at the first command
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      // Get all commands from history (filter out empty commands)
+      const commands = history.filter((h) => h.command).map((h) => h.command)
+      
+      if (commands.length === 0 || historyIndex === -1) {
+        // If at the end or no history, clear input
+        setCurrentInput('')
+        return
+      }
+      
+      if (historyIndex < commands.length - 1) {
+        // Go to next command
+        const newIndex = historyIndex + 1
+        setHistoryIndex(newIndex)
+        setCurrentInput(commands[newIndex])
+      } else {
+        // At the end, clear input and reset index
+        setCurrentInput('')
+        setHistoryIndex(-1)
       }
     } else if (e.key === 'l' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
-      setHistory([])
+      // Clear screen visually by hiding all current history, but keep history intact
+      setDisplayStartIndex(history.length)
+      // Scroll to bottom
+      if (terminalRef.current) {
+        terminalRef.current.scrollTop = terminalRef.current.scrollHeight
+      }
     }
   }
 
@@ -201,8 +346,8 @@ Version: 1.0.0`
         </pre>
       )}
 
-      {history.map((item, index) => (
-        <div key={index} style={{ marginBottom: '10px' }}>
+      {history.slice(displayStartIndex).map((item, index) => (
+        <div key={displayStartIndex + index} style={{ marginBottom: '10px' }}>
           {item.command && (
             <div style={{ marginBottom: '5px' }}>
               <span style={{ color: '#00ff00' }}>web-user@terminal</span>
@@ -229,35 +374,45 @@ Version: 1.0.0`
         <span style={{ color: '#ffffff' }}>:</span>
         <span style={{ color: '#00bfff' }}>~</span>
         <span style={{ color: '#ffffff' }}>$ </span>
-        <input
-          ref={inputRef}
-          type="text"
-          value={currentInput}
-          onChange={(e) => setCurrentInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          style={{
-            flex: 1,
-            backgroundColor: 'transparent',
-            border: 'none',
-            outline: 'none',
-            fontFamily: "'Courier New', monospace",
-            fontSize: '14px',
-            marginLeft: '5px',
-            caretColor: 'transparent',
-            color: 'transparent',
-            textShadow: '0 0 0 #ffffff',
-          }}
-          autoFocus
-        />
-        <span
-          style={{
-            display: 'inline-block',
-            width: '8px',
-            height: '16px',
-            backgroundColor: showCursor ? '#ffffff' : 'transparent',
-            marginLeft: '2px',
-          }}
-        />
+        <div style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '5px', position: 'relative' }}>
+          <span style={{ color: '#ffffff', whiteSpace: 'pre', fontFamily: "'Courier New', monospace", fontSize: '14px' }}>
+            {currentInput}
+          </span>
+          <span
+            style={{
+              display: 'inline-block',
+              width: '8px',
+              height: '16px',
+              backgroundColor: showCursor ? '#ffffff' : 'transparent',
+              marginLeft: '2px',
+            }}
+          />
+          <input
+            ref={inputRef}
+            type="text"
+            value={currentInput}
+            onChange={(e) => setCurrentInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'transparent',
+              border: 'none',
+              outline: 'none',
+              fontFamily: "'Courier New', monospace",
+              fontSize: '14px',
+              caretColor: 'transparent',
+              color: 'transparent',
+              textShadow: '0 0 0 transparent',
+              padding: 0,
+              margin: 0,
+            }}
+            autoFocus
+          />
+        </div>
       </div>
     </div>
   )

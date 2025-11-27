@@ -32,4 +32,25 @@ spec:
             name: terminal-backend
             port:
               number: 8000
+      - path: /docs
+        pathType: Exact
+        backend:
+          service:
+            name: terminal-backend
+            port:
+              number: 8000
+      - path: /redoc
+        pathType: Exact
+        backend:
+          service:
+            name: terminal-backend
+            port:
+              number: 8000
+      - path: /openapi.json
+        pathType: Exact
+        backend:
+          service:
+            name: terminal-backend
+            port:
+              number: 8000
 

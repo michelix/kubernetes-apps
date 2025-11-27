@@ -30,7 +30,15 @@ You need to add Docker Hub credentials as GitHub secrets:
 4. Add the following secrets:
 
    - **Name**: `DOCKERHUB_USERNAME`
-     - **Value**: Your Docker Hub username (e.g., `michelix`)
+     - **Value**: Your Docker Hub login username (usually your email address)
+     - **Example**: `user@example.com`
+     - **Note**: This is used for authentication/login to Docker Hub
+
+   - **Name**: `DOCKER_REGISTRY_PATH`
+     - **Value**: Your Docker Hub organization or username for image paths
+     - **Example**: `yourusername` or `yourorg`
+     - **Note**: This is the path used in image tags (e.g., `docker.io/yourusername/terminal-frontend`)
+     - **Important**: This may differ from your login username if you use an organization
 
    - **Name**: `DOCKERHUB_TOKEN`
      - **Value**: Your Docker Hub access token
@@ -47,12 +55,15 @@ The workflow file is located at `.github/workflows/terminal-build-deploy.yml`.
 
 Key configuration points:
 - **Registry**: `docker.io` (Docker Hub)
-- **Image names**: `michelix/terminal-frontend` and `michelix/terminal-backend`
+- **Image names**: Constructed from `DOCKER_REGISTRY_PATH` secret (e.g., `yourusername/terminal-frontend`)
 - **Trigger**: Pushes to `main` branch when files in `applications/terminal/` change
 
-To customize:
-- Edit the `env` section in the workflow file
-- Change `REGISTRY`, `FRONTEND_IMAGE`, or `BACKEND_IMAGE` as needed
+The workflow automatically:
+- Uses `DOCKERHUB_USERNAME` for Docker Hub authentication
+- Uses `DOCKER_REGISTRY_PATH` to build image paths (e.g., `docker.io/yourusername/terminal-frontend`)
+- Tags images with commit hash and `latest`
+
+**Note**: If your Docker Hub login username differs from your registry path (e.g., login with email but images under an organization), make sure both secrets are set correctly.
 
 ### 3. How It Works
 
@@ -86,8 +97,10 @@ New Version Running in Kubernetes
 
 #### Image Tagging Strategy
 
-- **Commit Hash Tag**: `michelix/terminal-frontend:e197848` (unique per commit)
-- **Latest Tag**: `michelix/terminal-frontend:latest` (always points to most recent)
+- **Commit Hash Tag**: `docker.io/yourusername/terminal-frontend:e197848` (unique per commit)
+- **Latest Tag**: `docker.io/yourusername/terminal-frontend:latest` (always points to most recent)
+
+**Note**: Replace `yourusername` with your actual `DOCKER_REGISTRY_PATH` value.
 
 The deployment manifests use the commit hash tag, ensuring:
 - Each deployment is traceable to a specific commit
@@ -125,7 +138,7 @@ cd applications/terminal
 VERSION=v1.0.0 ./build.sh
 
 # Build and push
-DOCKER_REGISTRY=docker.io/michelix PUSH_IMAGES=true ./build.sh
+DOCKER_REGISTRY=docker.io/yourusername PUSH_IMAGES=true ./build.sh
 ```
 
 ### 6. Troubleshooting
@@ -139,9 +152,17 @@ DOCKER_REGISTRY=docker.io/michelix PUSH_IMAGES=true ./build.sh
 
 #### Docker Hub Authentication Failed
 
-- Verify `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets are set correctly
+- Verify `DOCKERHUB_USERNAME`, `DOCKER_REGISTRY_PATH`, and `DOCKERHUB_TOKEN` secrets are set correctly
 - Check that the token has **Read & Write** permissions
 - Ensure the token hasn't expired
+- Verify `DOCKERHUB_USERNAME` is your login email/username (for authentication)
+- Verify `DOCKER_REGISTRY_PATH` matches your Docker Hub organization/username (for image paths)
+
+#### Invalid Image Tag Format
+
+- Ensure `DOCKER_REGISTRY_PATH` is set and contains only valid characters (lowercase letters, numbers, hyphens, underscores)
+- Check that `DOCKER_REGISTRY_PATH` doesn't include `docker.io/` prefix (it's added automatically)
+- Verify the secret is not empty
 
 #### Images Not Updating in Kubernetes
 

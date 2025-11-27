@@ -1,0 +1,132 @@
+name: Configure and Deploy Homepage Application
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'applications/homepage/manifests/**'
+      - 'applications/homepage/application.yaml'
+      - '.github/workflows/homepage-configure-deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  configure-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.DOMAIN }}" ]; then
+            echo "❌ Error: DOMAIN secret is not set"
+            echo "Please set DOMAIN in repository secrets (e.g., 'example.com')"
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.REPO_USERNAME }}" ]; then
+            echo "❌ Error: REPO_USERNAME secret is not set"
+            echo "Please set REPO_USERNAME in repository secrets (your GitHub username)"
+            exit 1
+          fi
+          
+          echo "✅ Required secrets validated"
+          echo "Domain: ${{ secrets.DOMAIN }}"
+          echo "GitHub Username: ${{ secrets.REPO_USERNAME }}"
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Setup deploy branch
+        run: |
+          # Check if deploy branch exists remotely
+          if git ls-remote --heads origin deploy | grep -q deploy; then
+            echo "Deploy branch exists, checking it out"
+            git fetch origin deploy
+            git checkout deploy
+            # Merge latest from main to keep deploy branch updated
+            if ! git merge main --no-edit --no-ff 2>/dev/null; then
+              echo "Merge conflict detected, resolving..."
+              # Abort the merge
+              git merge --abort
+              # Get latest homepage files from main (we'll reconfigure them anyway)
+              git checkout main -- applications/homepage/ 2>/dev/null || true
+              echo "✅ Updated homepage files from main branch"
+            fi
+          else
+            echo "Creating new deploy branch from main"
+            git checkout -b deploy
+          fi
+
+      - name: Configure homepage manifests
+        run: |
+          DOMAIN="${{ secrets.DOMAIN }}"
+          LOCATION="${{ secrets.LOCATION }}"
+          LATITUDE="${{ secrets.LATITUDE }}"
+          LONGITUDE="${{ secrets.LONGITUDE }}"
+          TIMEZONE="${{ secrets.TIMEZONE }}"
+          REPO_USERNAME="${{ secrets.REPO_USERNAME }}"
+          
+          # Set defaults for optional values
+          LOCATION="${LOCATION:-Your City}"
+          LATITUDE="${LATITUDE:-0.0}"
+          LONGITUDE="${LONGITUDE:-0.0}"
+          TIMEZONE="${TIMEZONE:-Europe/Berlin}"
+          
+          echo "🔧 Configuring homepage manifests..."
+          echo "Domain: ${DOMAIN}"
+          echo "Location: ${LOCATION}"
+          echo "Coordinates: ${LATITUDE}, ${LONGITUDE}"
+          echo "Timezone: ${TIMEZONE}"
+          
+          # Update homepage configmap
+          sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/homepage/manifests/configmap.yaml
+          sed -i "s|YOUR_LOCATION|${LOCATION}|g" applications/homepage/manifests/configmap.yaml
+          sed -i "s|YOUR_LATITUDE|${LATITUDE}|g" applications/homepage/manifests/configmap.yaml
+          sed -i "s|YOUR_LONGITUDE|${LONGITUDE}|g" applications/homepage/manifests/configmap.yaml
+          sed -i "s|YOUR_TIMEZONE|${TIMEZONE}|g" applications/homepage/manifests/configmap.yaml
+          
+          # Update homepage deployment
+          sed -i "s|homepage.YOUR_DOMAIN|homepage.${DOMAIN}|g" applications/homepage/manifests/deployment.yaml
+          
+          # Update homepage ingress
+          sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/homepage/manifests/ingress.yaml
+          
+          # Update homepage application.yaml
+          sed -i "s|YOUR_USERNAME|${REPO_USERNAME}|g" applications/homepage/application.yaml
+          
+          echo "✅ Configuration applied successfully"
+
+      - name: Check for manifest changes
+        id: check-manifests
+        run: |
+          git add applications/homepage/manifests/*.yaml applications/homepage/application.yaml
+          if git diff --staged --quiet; then
+            echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  No manifest changes needed"
+          else
+            echo "HAS_CHANGES=true" >> $GITHUB_OUTPUT
+            echo "📝 Manifest changes detected"
+          fi
+
+      - name: Commit configured manifests to deploy branch
+        if: steps.check-manifests.outputs.HAS_CHANGES == 'true'
+        run: |
+          git commit -m "chore(homepage): configure with domain ${{ secrets.DOMAIN }}"
+          git push origin deploy
+
+      - name: Output deployment info
+        run: |
+          echo "✅ Homepage manifests configured and pushed to deploy branch"
+          echo "Domain: ${{ secrets.DOMAIN }}"
+          echo "🔄 ArgoCD will automatically sync the changes from deploy branch"
+
