@@ -78,6 +78,67 @@ sed -i "s|YOUR_USERNAME|${REPO_USERNAME}|g" applications/terminal/application.ya
 
 echo "✅ Configuration updated successfully!"
 echo ""
+
+# Check if deploy branch exists and update it too
+CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
+if [ -n "${CURRENT_BRANCH}" ] && git ls-remote --heads origin deploy | grep -q deploy; then
+    echo "🔄 Updating deploy branch with configuration..."
+    
+    # Save current branch
+    ORIGINAL_BRANCH="${CURRENT_BRANCH}"
+    
+    # Fetch latest deploy branch
+    git fetch origin deploy 2>/dev/null || true
+    
+    # Checkout deploy branch
+    git checkout deploy 2>/dev/null || {
+        echo "⚠️  Could not checkout deploy branch, skipping deploy branch update"
+        git checkout "${ORIGINAL_BRANCH}" 2>/dev/null || true
+    }
+    
+    if [ "$(git branch --show-current)" = "deploy" ]; then
+        # Apply the same replacements on deploy branch
+        echo "   Applying configuration to deploy branch..."
+        
+        # Update homepage configmap
+        sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/homepage/manifests/configmap.yaml 2>/dev/null || true
+        sed -i "s|YOUR_LOCATION|${LOCATION}|g" applications/homepage/manifests/configmap.yaml 2>/dev/null || true
+        sed -i "s|YOUR_LATITUDE|${LATITUDE}|g" applications/homepage/manifests/configmap.yaml 2>/dev/null || true
+        sed -i "s|YOUR_LONGITUDE|${LONGITUDE}|g" applications/homepage/manifests/configmap.yaml 2>/dev/null || true
+        sed -i "s|YOUR_TIMEZONE|${TIMEZONE}|g" applications/homepage/manifests/configmap.yaml 2>/dev/null || true
+        sed -i "s|YOUR_HOMEPAGE_HOSTNAME|${HOMEPAGE_HOSTNAME}|g" applications/homepage/manifests/configmap.yaml 2>/dev/null || true
+        sed -i "s|YOUR_HOMEPAGE_TITLE|${HOMEPAGE_TITLE}|g" applications/homepage/manifests/configmap.yaml 2>/dev/null || true
+        
+        # Update homepage deployment
+        sed -i "s|homepage.YOUR_DOMAIN|homepage.${DOMAIN}|g" applications/homepage/manifests/deployment.yaml 2>/dev/null || true
+        
+        # Update homepage ingress
+        sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/homepage/manifests/ingress.yaml 2>/dev/null || true
+        
+        # Update terminal ingress
+        sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/terminal/manifests/ingress.yaml 2>/dev/null || true
+        
+        # Update terminal deployment manifests
+        sed -i "s|YOUR_REGISTRY|${DOCKER_REGISTRY}|g" applications/terminal/manifests/frontend-deployment.yaml 2>/dev/null || true
+        sed -i "s|YOUR_REGISTRY|${DOCKER_REGISTRY}|g" applications/terminal/manifests/backend-deployment.yaml 2>/dev/null || true
+        
+        # Update terminal application.yaml
+        sed -i "s|YOUR_USERNAME|${REPO_USERNAME}|g" applications/terminal/application.yaml 2>/dev/null || true
+        
+        # Check if there are changes
+        if ! git diff --quiet || ! git diff --cached --quiet; then
+            git add -A
+            git commit -m "chore: apply configuration from configure.sh script" || true
+            echo "   ✅ Deploy branch updated and committed"
+        else
+            echo "   ℹ️  No changes needed in deploy branch"
+        fi
+        
+        # Switch back to original branch
+        git checkout "${ORIGINAL_BRANCH}" 2>/dev/null || true
+    fi
+fi
+
 echo "📋 Your configuration:"
 echo "Domain: ${DOMAIN}"
 echo "Location: ${LOCATION}"

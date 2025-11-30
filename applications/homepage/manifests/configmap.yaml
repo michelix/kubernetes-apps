@@ -11,44 +11,44 @@ data:
     - Home Services:
         - Sophos Firewall:
             icon: sophos
-            href: https://sophos.YOUR_DOMAIN
+            href: https://sophos.valentak.at
             description: Firewall
         - Proxmox:
             icon: proxmox
-            href: https://pve2.YOUR_DOMAIN:8006/
+            href: https://pve2.valentak.at:8006/
             description: Virtualization
         - Traefik:
             icon: traefik
-            href: "https://traefik.YOUR_DOMAIN/dashboard/"
+            href: "https://traefik.valentak.at/dashboard/"
             description: Reverse Proxy
         - Pihole:
             icon: pi-hole
-            href: "https://pihole.YOUR_DOMAIN/admin/"
+            href: "https://pihole.valentak.at/admin/"
             description: DNS Ad Blocker
         - Pihole2:
             icon: pi-hole
-            href: "https://pihole2.YOUR_DOMAIN/admin/"
+            href: "https://pihole2.valentak.at/admin/"
             description: K8s DNS Ad Blocker
         - Ansible Semaphore:
             icon: ansible
-            href: "https://ansible.YOUR_DOMAIN"
+            href: "https://ansible.valentak.at"
             description: Automation
         - Dockge:
             icon: dockge
-            href: "https://dockge.YOUR_DOMAIN"
+            href: "https://dockge.valentak.at"
             description: Docker Compose Manager
         - TrueNas:
             icon: truenas
-            href: "https://truenas.YOUR_DOMAIN"
+            href: "https://truenas.valentak.at"
             description: NAS Storage
     - Kubernetes Services:
         - ArgoCD:
             icon: argo-cd
-            href: "https://argocd.YOUR_DOMAIN"
+            href: "https://argocd.valentak.at"
             description: GitOps
         - Gitea:
             icon: gitea
-            href: "https://gitea.YOUR_DOMAIN"
+            href: "https://gitea.valentak.at"
             description: Git Server
     - Development Tools:
         - StackOverflow:
@@ -214,7 +214,7 @@ data:
     title: Home Lab
     kubernetes:
       mode: cluster
-    hostname: homepage.YOUR_DOMAIN
+    hostname: homepage.valentak.at
     hostValidation: false
     theme: dark
     headerStyle: boxed
