@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, APIRouter, Request, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -8,6 +8,7 @@ import os
 import subprocess
 import logging
 import re
+import requests
 from datetime import datetime
 from database import get_db, init_db, save_command_history, get_command_history
 
@@ -62,18 +63,8 @@ def get_version():
 
 api_version = get_version()
 
-# Create main FastAPI app (root level for health checks)
-app = FastAPI(title="Terminal API", version=api_version)
-
-# Create API v1 router
-api_v1_router = APIRouter(prefix="/v1", tags=["v1"])
-
-# Create sub-app for API with docs enabled/disabled
-# When api_app is mounted at /api, requests to /api/* become /* in the mounted app
-# So docs_url="/docs" means docs are at /api/docs from main app
-# To have docs at /api/v1/docs, we need to use root_path or mount differently
-# Actually, FastAPI docs are app-level, so we'll put them at /api/docs and add a redirect
-api_app = FastAPI(
+# Create main FastAPI app
+app = FastAPI(
     title="Terminal API",
     version=api_version,
     docs_url="/docs" if enable_docs else None,
@@ -81,7 +72,7 @@ api_app = FastAPI(
     openapi_url="/openapi.json" if enable_docs else None,
 )
 
-# CORS middleware for both apps
+# CORS middleware
 cors_config = {
     "allow_origins": ["*"],  # In production, specify your frontend domain
     "allow_credentials": True,
@@ -89,10 +80,9 @@ cors_config = {
     "allow_headers": ["*"],
 }
 app.add_middleware(CORSMiddleware, **cors_config)
-api_app.add_middleware(CORSMiddleware, **cors_config)
 
 # Custom exception handler to sanitize error messages for security
-@api_app.exception_handler(RequestValidationError)
+@app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle validation errors - sanitize messages to prevent information disclosure"""
     if show_detailed_errors:
@@ -109,7 +99,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             content={"detail": "Invalid input provided"}
         )
 
-@api_app.exception_handler(HTTPException)
+@app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     """Handle HTTP exceptions - sanitize messages for security"""
     if show_detailed_errors:
@@ -138,7 +128,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
             )
 
 # Initialize database on startup
-@api_app.on_event("startup")
+@app.on_event("startup")
 async def startup_event():
     init_db()
 
@@ -172,7 +162,71 @@ class CommandResponse(BaseModel):
     output: str
     error: Optional[str] = None
 
-# Root level endpoints (for health checks via ingress)
+async def get_weather(location: Optional[str] = None) -> str:
+    """
+    Fetch weather from wttr.in API.
+    
+    Args:
+        location: Optional location string. If None, uses DEFAULT_WEATHER_LOCATION env var or returns usage message.
+    
+    Returns:
+        Formatted weather output with ANSI codes removed.
+    """
+    # If no location provided, check for default location
+    if not location or (isinstance(location, str) and location.strip() == ""):
+        default_location = os.getenv("DEFAULT_WEATHER_LOCATION")
+        if default_location:
+            location = default_location.strip()
+        else:
+            return "Usage: weather [location]\nExample: weather London"
+    
+    # Validate location format (alphanumeric, spaces, hyphens, commas)
+    # location is guaranteed to be a non-empty string at this point
+    location = location.strip()
+    if len(location) > 100:
+        return "Error: Location name is too long (max 100 characters)."
+    
+    if not re.match(r'^[a-zA-Z0-9\s,-]+$', location):
+        return "Error: Invalid location. Only letters, numbers, spaces, hyphens, and commas are allowed."
+    
+    try:
+        # Call wttr.in API with ?A flag to disable ANSI colors (but we'll still clean them)
+        # Using format=1 for plain text, or format=2 for minimal output
+        # We'll use the default format and clean ANSI codes ourselves
+        url = f"https://wttr.in/{location}?A"
+        
+        # Set timeout and user agent
+        headers = {
+            "User-Agent": "curl/7.68.0"  # wttr.in prefers curl user agent
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        # Clean ANSI escape codes
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        clean_output = ansi_escape.sub('', response.text)
+        
+        # Remove promotional text
+        clean_output = clean_output.replace("Follow @igor_chubin for wttr.in updates", "")
+        clean_output = clean_output.replace("If you like wttr.in, you can donate here: https://wttr.in/donate", "")
+        
+        # Clean up any extra whitespace
+        clean_output = clean_output.strip()
+        
+        return clean_output
+        
+    except requests.exceptions.Timeout:
+        logger.error(f"Weather API timeout for location: {location}")
+        return "Error: Weather service timeout. Please try again later."
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Weather API error for location '{location}': {e}")
+        return "Error: Unable to fetch weather data. Please check the location and try again."
+    except Exception as e:
+        logger.error(f"Unexpected error fetching weather for '{location}': {e}", exc_info=True)
+        return "Error: Unable to fetch weather data. Please try again later."
+
+# Root level endpoints
 @app.get("/")
 async def root():
     return {"message": "Terminal API", "version": api_version}
@@ -181,27 +235,8 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
-# Redirect docs paths to /api/docs (where api_app docs are mounted)
-if enable_docs:
-    from fastapi.responses import RedirectResponse
-    
-    @app.get("/docs", include_in_schema=False)
-    async def redirect_docs():
-        """Redirect /docs to /api/docs"""
-        return RedirectResponse(url="/api/docs")
-    
-    @app.get("/redoc", include_in_schema=False)
-    async def redirect_redoc():
-        """Redirect /redoc to /api/redoc"""
-        return RedirectResponse(url="/api/redoc")
-    
-    @app.get("/openapi.json", include_in_schema=False)
-    async def redirect_openapi():
-        """Redirect /openapi.json to /api/openapi.json"""
-        return RedirectResponse(url="/api/openapi.json")
-
-# API v1 endpoints
-@api_v1_router.post("/execute", response_model=CommandResponse)
+# API endpoints (no versioning - simplified)
+@app.post("/api/execute", response_model=CommandResponse)
 async def execute_command(request: CommandRequest):
     """
     Execute a terminal command and return the output.
@@ -247,6 +282,10 @@ Swap:          2.0G          0B        2.0G"""
             output = """USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
 root         1  0.0  0.1  12345  1234 ?        Ss   10:00   0:01 /sbin/init
 web-user  1234  0.1  0.2  23456  2345 ?        S    10:05   0:02 node server.js"""
+        elif command.startswith("weather"):
+            # Extract location from command (e.g., "weather London" -> "London")
+            location = command.split(" ", 1)[1] if len(command.split()) > 1 else None
+            output = await get_weather(location)
         else:
             # For unknown commands, just return a message
             output = f"Command '{command}' executed successfully"
@@ -265,7 +304,7 @@ web-user  1234  0.1  0.2  23456  2345 ?        S    10:05   0:02 node server.js"
     
     return CommandResponse(output=output, error=error)
 
-@api_v1_router.get("/history")
+@app.get("/api/history")
 async def get_history(session_id: Optional[str] = None, limit: int = 50):
     """Get command history from database for a specific session"""
     if not session_id:
@@ -293,13 +332,6 @@ async def get_history(session_id: Optional[str] = None, limit: int = 50):
         # Don't expose internal error details to users
         error_detail = str(e) if show_detailed_errors else "Internal server error"
         raise HTTPException(status_code=500, detail=error_detail)
-
-# Include v1 router in API app
-api_app.include_router(api_v1_router)
-
-# Mount API app at /api prefix
-# FastAPI's built-in docs are available at /api/docs, /api/redoc, /api/openapi.json
-app.mount("/api", api_app)
 
 if __name__ == "__main__":
     import uvicorn

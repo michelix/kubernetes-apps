@@ -161,7 +161,7 @@ export default function Terminal() {
     } else if (trimmedCommand === 'history') {
       // Fetch history from backend database for this session
       try {
-        const historyEndpoint = API_URL.startsWith('/') ? `${API_URL}/v1/history` : `${API_URL}/api/v1/history`
+        const historyEndpoint = API_URL.startsWith('/') ? `${API_URL}/history` : `${API_URL}/api/history`
         const response = await axios.get(historyEndpoint, { 
           params: { 
             session_id: sessionId,
@@ -217,7 +217,7 @@ Version: ${backendVersion ?? 'unknown (backend version not available)'}` as stri
     } else {
       // Try to execute on backend
       try {
-        const apiEndpoint = API_URL.startsWith('/') ? `${API_URL}/v1/execute` : `${API_URL}/api/v1/execute`
+        const apiEndpoint = API_URL.startsWith('/') ? `${API_URL}/execute` : `${API_URL}/api/execute`
         const response = await axios.post(apiEndpoint, {
           command: trimmedCommand,
           session_id: sessionId,
