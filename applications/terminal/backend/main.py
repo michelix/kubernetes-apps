@@ -231,6 +231,11 @@ async def get_weather(location: Optional[str] = None) -> str:
 async def root():
     return {"message": "Terminal API", "version": api_version}
 
+@app.get("/api")
+async def api_root():
+    """API root endpoint - returns version info"""
+    return {"message": "Terminal API", "version": api_version}
+
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
