@@ -201,7 +201,9 @@ The service will appear in the "Kubernetes Services" section of your Homepage da
 
 - **Terminal-like UI**: Debian-style terminal appearance with green text on dark background
 - **Interactive Commands**: Execute various terminal commands
-- **Command History**: View and navigate through command history (stored in PostgreSQL)
+- **Command History**: View and navigate through command history (stored in PostgreSQL, session-based)
+- **Version Display**: Backend version automatically fetched and displayed in `neofetch` and `about` commands
+- **Weather Integration**: Fetch weather information using the `weather` command
 - **ASCII Art**: Displays ASCII logo on initial load
 - **Real-time Cursor**: Blinking cursor that mimics real terminal
 - **Help System**: Type `help` or press Enter to see available commands
@@ -217,8 +219,90 @@ The service will appear in the "Kubernetes Services" section of your Homepage da
 - `ls` - List files (simulated)
 - `pwd` - Print working directory
 - `history` - Show command history from database
-- `about` - Show information about the terminal
+- `neofetch` - Display system information with backend version
+- `about` - Show information about the terminal (includes backend version)
+- `weather [location]` - Fetch weather information for a location
+  - If no location is provided:
+    - If `DEFAULT_WEATHER_LOCATION` environment variable is set, uses that default location
+    - Otherwise, displays usage instructions
+  - Example: `weather London` or `weather Dornbirn`
+  - Uses the wttr.in API service
 - `exit` - Reload the page
+
+## 🔌 API Endpoints
+
+The backend provides the following REST API endpoints:
+
+### Root Endpoints
+
+- **GET `/`** - Returns API information and version
+  - Response: `{"message": "Terminal API", "version": "1.0.0"}`
+  
+- **GET `/api`** - Returns API information and version (accessible via ingress)
+  - Response: `{"message": "Terminal API", "version": "1.0.0"}`
+  - Used by frontend to fetch backend version for display in `neofetch` and `about` commands
+
+- **GET `/health`** - Health check endpoint
+  - Response: `{"status": "healthy"}`
+  - Used by Kubernetes liveness and readiness probes
+
+### API Endpoints
+
+- **POST `/api/execute`** - Execute a terminal command
+  - Request body:
+    ```json
+    {
+      "command": "ls",
+      "session_id": "session_1234567890_abc123"
+    }
+    ```
+  - Response:
+    ```json
+    {
+      "output": "file1.txt\nfile2.txt",
+      "error": null
+    }
+    ```
+  - The `session_id` is optional but recommended for session-based command history
+
+- **GET `/api/history`** - Retrieve command history for a session
+  - Query parameters:
+    - `session_id` (required): Session identifier
+    - `limit` (optional, default: 50): Maximum number of history entries to return
+  - Example: `GET /api/history?session_id=session_1234567890_abc123&limit=50`
+  - Response:
+    ```json
+    {
+      "history": [
+        {
+          "command": "ls",
+          "output": "file1.txt\nfile2.txt",
+          "timestamp": "2025-01-15T10:30:00Z"
+        }
+      ]
+    }
+    ```
+
+### Weather Command
+
+The `weather` command is handled by the `/api/execute` endpoint:
+- **Command**: `weather [location]`
+- **Backend Processing**: The backend extracts the location from the command and calls the wttr.in API
+- **Default Location Behavior**:
+  - If no location is specified in the command:
+    - If `DEFAULT_WEATHER_LOCATION` environment variable is set, that location is used
+    - If `DEFAULT_WEATHER_LOCATION` is not set, a usage message is returned: `"Usage: weather [location]\nExample: weather London"`
+- **Validation**: Location names are validated (alphanumeric, spaces, hyphens, commas only, max 100 characters)
+- **Response**: Returns formatted weather information with ANSI codes removed
+- **Error Handling**: Returns user-friendly error messages for timeouts or invalid locations
+
+### Documentation Endpoints (Development Only)
+
+These endpoints are only available when `ENABLE_DOCS=true` is set:
+
+- **GET `/docs`** - Interactive API documentation (Swagger UI)
+- **GET `/redoc`** - Alternative API documentation (ReDoc)
+- **GET `/openapi.json`** - OpenAPI specification in JSON format
 
 ## 🔧 Development
 
@@ -267,6 +351,25 @@ docker run -d \
 - `DATABASE_URL`: PostgreSQL connection string
   - Format: `postgresql://user:password@host:port/database`
   - Kubernetes: `postgresql://terminal_user:terminal_pass@postgres:5432/terminal_db`
+- `DEFAULT_WEATHER_LOCATION`: Default location for weather command when no location is specified
+  - Example: `"Dornbirn"` or `"London,UK"`
+  - Used when user runs `weather` without a location parameter
+  - If not set, the `weather` command without a location will show usage instructions instead
+  - **Configuration**: Must be set in the backend deployment manifest at `applications/terminal/manifests/backend-deployment.yaml` in the `env` section:
+    ```yaml
+    env:
+    - name: DEFAULT_WEATHER_LOCATION
+      value: "Dornbirn"  # Your default location
+    ```
+- `ENABLE_DOCS`: Enable API documentation endpoints (`/docs`, `/redoc`, `/openapi.json`)
+  - Set to `"true"` for development, `"false"` (default) for production
+  - When disabled, these endpoints return 404 for security
+- `SHOW_DETAILED_ERRORS`: Show detailed error messages in API responses
+  - Set to `"true"` for development, `"false"` (default) for production
+  - When disabled, generic error messages are returned to prevent information disclosure
+- `API_VERSION`: Override the API version string
+  - If not set, version is determined from build-time VERSION file or git tags
+  - Falls back to `"1.0.0"` if no version source is available
 
 ## 📊 Database Schema
 
