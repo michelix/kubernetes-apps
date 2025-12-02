@@ -41,18 +41,18 @@ Welcome to the Terminal
 `
 
 const HELP_TEXT = `Available commands:
-  help          - Show this help message
-  clear         - Clear the terminal
-  date          - Show current date and time
-  whoami        - Show current user
-  echo <text>   - Echo text back
-  ls            - List files (simulated)
-  pwd           - Print working directory
-  history       - Show command history
-  neofetch      - Display system information
-  about         - Show information about this terminal
+  help              - Show this help message
+  clear             - Clear the terminal
+  date              - Show current date and time
+  whoami            - Show current user
+  echo <text>       - Echo text back
+  ls                - List files (simulated)
+  pwd               - Print working directory
+  history           - Show command history
+  neofetch          - Display system information
+  about             - Show information about this terminal
   weather [location] - Fetch weather information for a location
-  exit          - Exit the terminal (reloads page)
+  exit              - Exit the terminal (reloads page)
 
 Type a command and press Enter to execute.`
 
