@@ -10,7 +10,7 @@ import logging
 import re
 import requests
 from datetime import datetime
-from database import get_db, init_db, save_command_history, get_command_history
+from database import init_db
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -298,45 +298,9 @@ web-user  1234  0.1  0.2  23456  2345 ?        S    10:05   0:02 node server.js"
         error = str(e)
         output = ""
     
-    # Save to database (only once, after command execution)
-    # Only save if session_id is provided (for session-based history)
-    if request.session_id:
-        try:
-            save_command_history(request.session_id, command, output if not error else error)
-        except Exception as e:
-            # Log error but don't fail the request
-            logger.error(f"Error saving to database: {e}")
-    
+    # Note: We intentionally do NOT store command history in the database anymore.
+    # History is kept only in the frontend (localStorage) per browser session.
     return CommandResponse(output=output, error=error)
-
-@app.get("/api/history")
-async def get_history(session_id: Optional[str] = None, limit: int = 50):
-    """Get command history from database for a specific session"""
-    if not session_id:
-        logger.warning("History endpoint called without session_id, returning empty history")
-        return {"history": []}
-    
-    # Validate session_id format (same validation as CommandRequest)
-    if len(session_id) > 100 or not re.match(r'^[a-zA-Z0-9_.-]+$', session_id):
-        logger.warning(f"Invalid session_id format received: {session_id[:20]}...")
-        # Use generic error message to prevent information disclosure
-        error_detail = "Invalid session_id format" if show_detailed_errors else "Invalid request"
-        raise HTTPException(status_code=400, detail=error_detail)
-    
-    # Validate limit to prevent abuse
-    if limit < 1 or limit > 1000:
-        limit = 50  # Default to 50 if invalid
-    
-    logger.info(f"History endpoint called with session_id={session_id[:8]}... and limit={limit}")
-    try:
-        history = get_command_history(session_id, limit)
-        logger.info(f"Retrieved {len(history)} history entries for session")
-        return {"history": history}
-    except Exception as e:
-        logger.error(f"Error retrieving history: {e}", exc_info=True)
-        # Don't expose internal error details to users
-        error_detail = str(e) if show_detailed_errors else "Internal server error"
-        raise HTTPException(status_code=500, detail=error_detail)
 
 if __name__ == "__main__":
     import uvicorn
