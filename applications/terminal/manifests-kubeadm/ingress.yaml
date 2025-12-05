@@ -15,7 +15,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: terminal.yourdomain.com
+  - host: CLOUDFLARE_TERMINAL_DOMAIN
     http:
       paths:
       - path: /
