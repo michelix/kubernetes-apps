@@ -229,30 +229,29 @@ jobs:
           fi
           
           # Get configuration values from secrets
-          DOMAIN="${{ secrets.DOMAIN }}"
+          CLOUDFLARE_TERMINAL_DOMAIN="${{ secrets.CLOUDFLARE_TERMINAL_DOMAIN }}"
           REPO_USERNAME="${{ secrets.REPO_USERNAME }}"
           DOCKER_REGISTRY="${{ env.DOCKER_REGISTRY }}"
           
           # Validate required secrets
-          if [ -z "${DOMAIN}" ] || [ -z "${REPO_USERNAME}" ] || [ -z "${DOCKER_REGISTRY}" ]; then
+          if [ -z "${CLOUDFLARE_TERMINAL_DOMAIN}" ] || [ -z "${REPO_USERNAME}" ] || [ -z "${DOCKER_REGISTRY}" ]; then
             echo "⚠️  Skipping ${BRANCH} branch: Required secrets not set"
             exit 0
           fi
           
           echo "🔧 Applying configuration for ${BRANCH} branch..."
-          echo "Domain: ${DOMAIN}"
+          echo "Cloudflare Terminal Domain: ${CLOUDFLARE_TERMINAL_DOMAIN}"
           echo "Repository Username: ${REPO_USERNAME}"
           echo "Docker Registry: ${DOCKER_REGISTRY}"
           
-          # Update Flux flux-setup.yaml
-          if [ -f "applications/terminal/flux-setup.yaml" ]; then
-            sed -i "s|YOUR_USERNAME|${REPO_USERNAME}|g" applications/terminal/flux-setup.yaml
+          # Update Flux kubeadm-flux-setup.yaml
+          if [ -f "applications/terminal/kubeadm-flux-setup.yaml" ]; then
+            sed -i "s|YOUR_USERNAME|${REPO_USERNAME}|g" applications/terminal/kubeadm-flux-setup.yaml
           fi
           
-          # Update ingress with domain
+          # Update ingress with domain (kubeadm/Flux uses CLOUDFLARE_TERMINAL_DOMAIN placeholder)
           if [ -f "${MANIFESTS_DIR}/ingress.yaml" ]; then
-            sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" ${MANIFESTS_DIR}/ingress.yaml
-            sed -i "s|terminal\.YOUR_DOMAIN|terminal.${DOMAIN}|g" ${MANIFESTS_DIR}/ingress.yaml
+            sed -i "s|CLOUDFLARE_TERMINAL_DOMAIN|${CLOUDFLARE_TERMINAL_DOMAIN}|g" ${MANIFESTS_DIR}/ingress.yaml
           fi
           
           # Replace YOUR_REGISTRY placeholder

@@ -250,42 +250,82 @@ kubectl get pods -n flux-system
 
 ## Step 9: Configure Flux Git Source
 
-Update the Git repository URL in `applications/terminal/flux-setup.yaml`:
+First, clone the repository to get the `kubeadm-flux-setup.yaml` file:
 
-```yaml
-spec:
-  url: https://github.com/YOUR_USERNAME/kubernetes-apps.git
-  ref:
-    branch: debian13-kubeadm-flux
+```bash
+# Clone the repository (as k8s-user, no sudo)
+cd ~
+git clone https://github.com/YOUR_USERNAME/kubernetes-apps.git
+cd kubernetes-apps
+
+# Switch to the debian13-kubeadm-flux branch
+git checkout debian13-kubeadm-flux
 ```
+
+**Note**: Replace `YOUR_USERNAME` with your actual GitHub username.
+
+The `kubeadm-flux-setup.yaml` file should already have the correct branch (`debian13-kubeadm-flux`) configured. The GitHub username will be automatically replaced by the workflow, but for initial setup you may need to update it manually:
+
+```bash
+# Update the GitHub username in kubeadm-flux-setup.yaml (only needed for initial setup)
+sed -i "s|YOUR_USERNAME|your-github-username|g" applications/terminal/kubeadm-flux-setup.yaml
+
+# Verify the change
+cat applications/terminal/kubeadm-flux-setup.yaml | grep url
+```
+
+**Note**: After the first workflow run, the username will be automatically replaced, so you only need to do this once.
 
 Then apply the Flux configuration:
 
 ```bash
 # Apply Flux Git source and Kustomization
-kubectl apply -f applications/terminal/flux-setup.yaml
+kubectl apply -f applications/terminal/kubeadm-flux-setup.yaml
 
 # Check Flux status
 flux get sources git
 flux get kustomizations
 ```
 
+**Alternative**: If you prefer not to clone the entire repo, you can download just the file:
+
+```bash
+# Download kubeadm-flux-setup.yaml directly
+curl -o kubeadm-flux-setup.yaml https://raw.githubusercontent.com/YOUR_USERNAME/kubernetes-apps/debian13-kubeadm-flux/applications/terminal/kubeadm-flux-setup.yaml
+
+# Update the GitHub username
+sed -i "s|YOUR_USERNAME|your-github-username|g" kubeadm-flux-setup.yaml
+
+# Apply it
+kubectl apply -f kubeadm-flux-setup.yaml
+```
+
 ## Step 10: Update Manifests for kubeadm
 
-Before Flux can deploy, update these files:
+Before Flux can deploy, ensure these are configured:
 
-### 1. Update Ingress Host
+### 1. Ingress Host (Automatically Updated by Workflow)
 
-Edit `applications/terminal/manifests-kubeadm/ingress.yaml`:
-- Change `terminal.yourdomain.com` to your actual domain or VM IP
+The ingress file uses the `CLOUDFLARE_TERMINAL_DOMAIN` placeholder. The GitHub Actions workflow will automatically replace it with your `CLOUDFLARE_TERMINAL_DOMAIN` secret when you push to `main`.
 
-### 2. Update Image Registry
+**GitHub Secret Required:**
+- Name: `CLOUDFLARE_TERMINAL_DOMAIN`
+- Value: Your full terminal domain (e.g., `terminal.example.com`)
 
-Edit deployment files:
-- `backend-deployment.yaml`: Update `YOUR_REGISTRY/terminal-backend:latest`
-- `frontend-deployment.yaml`: Update `YOUR_REGISTRY/terminal-frontend:latest`
+**Note**: No manual editing needed - the workflow handles this automatically.
 
-### 3. Update Storage Class (if needed)
+### 2. Image Registry (Automatically Updated by Workflow)
+
+The deployment files use `YOUR_REGISTRY` placeholder. The GitHub Actions workflow will automatically replace it with your Docker registry when you push to `main`.
+
+**GitHub Secrets Required:**
+- `DOCKERHUB_USERNAME` - Your Docker Hub login email
+- `DOCKERHUB_TOKEN` - Your Docker Hub access token
+- `DOCKER_REGISTRY_PATH` - Your Docker Hub org/username (e.g., `michelix`)
+
+**Note**: No manual editing needed - the workflow handles this automatically.
+
+### 3. Install Storage Provisioner
 
 kubeadm doesn't include a default storage provisioner. You'll need to install one:
 
@@ -303,21 +343,29 @@ Or use the manifests with `local-path` storage class.
 
 kubeadm doesn't include an ingress controller. Install one:
 
+**For single-node clusters (no cloud LoadBalancer):**
+
 ```bash
-# Install NGINX Ingress Controller
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.1/deploy/static/provider/cloud/deploy.yaml
+# Install NGINX Ingress Controller with NodePort (for bare-metal/single-node)
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.1/deploy/static/provider/baremetal/deploy.yaml
 
 # Wait for ingress controller to be ready
 kubectl get pods -n ingress-nginx --watch
 ```
 
-### 5. Commit Changes
+**Note**: If you already installed the cloud version and it shows `<pending>` for EXTERNAL-IP, you can either:
+- Use NodePort access (see Step 12)
+- Or reinstall with the bare-metal version above (delete the old one first: `kubectl delete -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.1/deploy/static/provider/cloud/deploy.yaml`)
 
-```bash
-git add .
-git commit -m "feat: configure kubeadm manifests for Debian 13 deployment"
-git push origin debian13-kubeadm-flux
-```
+### 5. Push to Trigger Workflow
+
+Once you push changes to `main`, the GitHub Actions workflow will:
+- Build and push Docker images
+- Automatically replace `CLOUDFLARE_TERMINAL_DOMAIN` with your GitHub secret value
+- Automatically replace `YOUR_REGISTRY` with your Docker registry
+- Update image tags with commit SHA
+- Push updated manifests to `debian13-kubeadm-flux` branch
+- Flux will automatically sync the changes
 
 ## Step 11: Monitor Deployment
 
@@ -336,16 +384,158 @@ kubectl logs -n flux-system -l app=kustomize-controller --tail=50
 
 ## Step 12: Access the Application
 
+For a single-node cluster without a cloud LoadBalancer, access via NodePort:
+
 ```bash
 # Check ingress
 kubectl get ingress -n terminal
 
-# Get the external IP (if using LoadBalancer) or use NodePort
-kubectl get svc -n ingress-nginx ingress-nginx-controller
+# Get the NodePort for HTTP (port 80)
+NODEPORT=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
+echo "NodePort for HTTP: ${NODEPORT}"
 
-# For NodePort access, use:
-# http://YOUR_VM_IP:$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')/terminal
+# Get your VM's IP address
+VM_IP=$(hostname -I | awk '{print $1}')
+echo "VM IP: ${VM_IP}"
+
+# Access the application
+echo "Access the terminal app at: http://${VM_IP}:${NODEPORT}"
 ```
+
+**Note**: The ingress uses the `CLOUDFLARE_TERMINAL_DOMAIN` placeholder which will be automatically replaced by the GitHub Actions workflow when you push to `main`. No manual patching needed - the workflow handles everything automatically.
+
+**For production**: Use Cloudflare Tunnel (see Step 12b) - the workflow will automatically update the ingress with your domain.
+
+## Step 12b: Cloudflare Setup with SSL
+
+If you're using Cloudflare with a real domain, here's how to configure it:
+
+### Cloudflare DNS Configuration
+
+1. **Create A Record**:
+   - Go to Cloudflare Dashboard → DNS
+   - Add A record: `terminal` → `YOUR_VM_IP`
+   - Enable proxy (orange cloud) ✅
+
+2. **SSL/TLS Settings**:
+   - Go to SSL/TLS → Overview
+   - Set encryption mode to **"Full"** or **"Full (strict)"**
+   - Cloudflare will terminate SSL, so your origin can use HTTP (port 80)
+
+### The Port Problem
+
+Cloudflare proxy expects standard ports (80/443), but NodePort uses high ports (30000-32767). You have two solutions:
+
+#### Solution: Cloudflare Tunnel (Cloudflared) - Recommended
+
+This is more secure (no open ports needed) and provides end-to-end encryption:
+
+```bash
+# Install cloudflared (as k8s-user, no sudo needed for user install)
+cd ~
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+chmod +x cloudflared
+sudo mv cloudflared /usr/local/bin/
+
+# Authenticate with Cloudflare (opens browser - you'll need to login)
+cloudflared tunnel login
+
+# Create the tunnel
+cloudflared tunnel create terminal
+
+# Get the tunnel ID
+TUNNEL_ID=$(cloudflared tunnel list | grep terminal | awk '{print $1}')
+echo "Tunnel ID: ${TUNNEL_ID}"
+
+# Get the NodePort
+NODEPORT=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
+echo "NodePort: ${NODEPORT}"
+
+# Configure the tunnel
+mkdir -p ~/.cloudflared
+
+# Set your terminal domain (replace with your actual domain)
+TERMINAL_DOMAIN="terminal.example.com"  # Replace with your actual domain
+
+cat > ~/.cloudflared/config.yml <<EOF
+tunnel: ${TUNNEL_ID}
+credentials-file: /home/k8s-user/.cloudflared/${TUNNEL_ID}.json
+
+ingress:
+  - hostname: ${TERMINAL_DOMAIN}
+    service: http://127.0.0.1:${NODEPORT}
+  - service: http_status:404
+EOF
+
+# Route the tunnel in Cloudflare (creates DNS record automatically)
+cloudflared tunnel route dns terminal ${TERMINAL_DOMAIN}
+
+# Test the tunnel (run in foreground first to verify)
+# cloudflared tunnel run terminal
+```
+
+**Create systemd service for persistence**:
+
+```bash
+# Create service file (the service will run as k8s-user and use ~/.cloudflared/config.yml)
+sudo tee /etc/systemd/system/cloudflared.service > /dev/null <<EOF
+[Unit]
+Description=Cloudflare Tunnel
+After=network.target
+
+[Service]
+Type=simple
+User=k8s-user
+WorkingDirectory=/home/k8s-user
+Environment="HOME=/home/k8s-user"
+ExecStart=/usr/local/bin/cloudflared tunnel --config /home/k8s-user/.cloudflared/config.yml run terminal
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Enable and start the service
+sudo systemctl daemon-reload
+sudo systemctl enable cloudflared
+sudo systemctl start cloudflared
+
+# Check status
+sudo systemctl status cloudflared
+```
+
+**Verify the tunnel**:
+
+```bash
+# Check tunnel status
+cloudflared tunnel list
+
+# Check service logs
+sudo journalctl -u cloudflared -f
+```
+
+**Important Notes**:
+- ✅ **No open ports needed** - Cloudflare Tunnel creates an outbound connection
+- ✅ **End-to-end encryption** - Traffic is encrypted between Cloudflare and your server
+- ✅ **Automatic DNS** - The `cloudflared tunnel route dns` command creates the DNS record
+- ✅ **Automatic ingress updates** - The GitHub Actions workflow automatically replaces `CLOUDFLARE_TERMINAL_DOMAIN` in the ingress manifest
+- ⚠️ **Update config if NodePort changes** - If the NodePort changes, update `~/.cloudflared/config.yml` and restart the service
+
+### After Cloudflare Setup
+
+1. **Set GitHub Secret**: 
+   - Go to GitHub repository → Settings → Secrets and variables → Actions
+   - Create secret: `CLOUDFLARE_TERMINAL_DOMAIN` with value `terminal.yourdomain.com` (your actual domain)
+
+2. **Workflow handles everything**: When you push to `main`, the workflow will:
+   - Replace `CLOUDFLARE_TERMINAL_DOMAIN` in ingress.yaml with your secret value
+   - Push updated manifests to `debian13-kubeadm-flux` branch
+   - Flux will automatically sync the changes
+
+3. **Access via domain**: `https://terminal.yourdomain.com` (Cloudflare handles SSL)
+
+4. **Verify**: Check that Cloudflare shows "Proxied" status and SSL is active
 
 ## Resource Usage
 
