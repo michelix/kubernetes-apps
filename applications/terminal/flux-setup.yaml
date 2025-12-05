@@ -1,0 +1,30 @@
+---
+# Flux Git Source
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: GitRepository
+metadata:
+  name: terminal-app
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/YOUR_USERNAME/kubernetes-apps.git
+  ref:
+    branch: debian13-kubeadm-flux
+---
+# Flux Kustomization
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: terminal-app
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: ./applications/terminal/manifests-kubeadm
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: terminal-app
+  wait: true
+  timeout: 5m
+
+

@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terminal-frontend
+  namespace: terminal
+  labels:
+    app: terminal-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: terminal-frontend
+  template:
+    metadata:
+      labels:
+        app: terminal-frontend
+        app.kubernetes.io/name: terminal-ingress
+    spec:
+      containers:
+      - name: frontend
+        # Image will be replaced by configure.sh script
+        image: YOUR_REGISTRY/terminal-frontend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "/api"
+        resources:
+          requests:
+            memory: "192Mi"
+            cpu: "100m"
+          limits:
+            memory: "384Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
