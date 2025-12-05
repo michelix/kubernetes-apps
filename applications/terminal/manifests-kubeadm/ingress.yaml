@@ -15,7 +15,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: CLOUDFLARE_TERMINAL_DOMAIN
+  - host: terminal.valentak.net
     http:
       paths:
       - path: /
