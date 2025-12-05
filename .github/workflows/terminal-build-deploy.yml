@@ -8,6 +8,7 @@ on:
       - 'applications/terminal/frontend/**'
       - 'applications/terminal/backend/**'
       - 'applications/terminal/manifests/**'
+      - 'applications/terminal/manifests-kubeadm/**'
       - '.github/workflows/terminal-build-deploy.yml'
   workflow_dispatch:
 
@@ -105,122 +106,182 @@ jobs:
           cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:buildcache,mode=max
 
-      - name: Setup deploy branch
+      - name: Deploy to ArgoCD (deploy branch)
         run: |
+          BRANCH="deploy"
+          MANIFESTS_DIR="applications/terminal/manifests"
+          
+          echo "🔄 Setting up ${BRANCH} branch for ArgoCD..."
+          
           # Check if deploy branch exists remotely
-          if git ls-remote --heads origin deploy | grep -q deploy; then
-            echo "Deploy branch exists, checking it out"
-            git fetch origin deploy
-            git checkout deploy
-            # Merge latest from main to keep deploy branch updated
-            # Use --strategy-option=theirs to prefer main's version in case of conflicts
+          if git ls-remote --heads origin ${BRANCH} | grep -q ${BRANCH}; then
+            echo "Branch ${BRANCH} exists, checking it out"
+            git fetch origin ${BRANCH}
+            git checkout ${BRANCH}
+            # Merge latest from main to keep branch updated
             if ! git merge main --no-edit --no-ff -X theirs 2>&1; then
               echo "⚠️  Merge had conflicts or issues, but continuing..."
-              # Check if we're in a conflicted state
               if [ -n "$(git ls-files -u)" ]; then
                 echo "Resolving conflicts by preferring main branch..."
                 git checkout --theirs .
                 git add -A
-                git commit -m "chore(terminal): merge main into deploy (conflicts resolved)"
+                git commit -m "chore(terminal): merge main into ${BRANCH} (conflicts resolved)"
               fi
             else
-              echo "✅ Successfully merged main into deploy"
+              echo "✅ Successfully merged main into ${BRANCH}"
             fi
           else
-            echo "Creating new deploy branch from main"
-            git checkout -b deploy
+            echo "Creating new ${BRANCH} branch from main"
+            git checkout -b ${BRANCH}
           fi
-
-      - name: Apply configuration (replace placeholders)
-        run: |
+          
           # Get configuration values from secrets
           DOMAIN="${{ secrets.DOMAIN }}"
           REPO_USERNAME="${{ secrets.REPO_USERNAME }}"
           DOCKER_REGISTRY="${{ env.DOCKER_REGISTRY }}"
           
           # Validate required secrets
-          if [ -z "${DOMAIN}" ]; then
-            echo "❌ Error: DOMAIN secret is not set"
-            exit 1
-          fi
-          if [ -z "${REPO_USERNAME}" ]; then
-            echo "❌ Error: REPO_USERNAME secret is not set"
-            exit 1
-          fi
-          if [ -z "${DOCKER_REGISTRY}" ]; then
-            echo "❌ Error: DOCKER_REGISTRY is not set"
-            exit 1
+          if [ -z "${DOMAIN}" ] || [ -z "${REPO_USERNAME}" ] || [ -z "${DOCKER_REGISTRY}" ]; then
+            echo "⚠️  Skipping ${BRANCH} branch: Required secrets not set"
+            exit 0
           fi
           
-          echo "🔧 Applying configuration from GitHub Secrets..."
+          echo "🔧 Applying configuration for ${BRANCH} branch..."
           echo "Domain: ${DOMAIN}"
           echo "Repository Username: ${REPO_USERNAME}"
           echo "Docker Registry: ${DOCKER_REGISTRY}"
           
-          # Replace placeholders in terminal manifests (similar to configure.sh)
-          # Update terminal ingress with domain (handles both YOUR_DOMAIN and terminal.YOUR_DOMAIN formats)
-          sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" applications/terminal/manifests/ingress.yaml
-          # Also handle terminal.YOUR_DOMAIN format if it exists
-          sed -i "s|terminal\.YOUR_DOMAIN|terminal.${DOMAIN}|g" applications/terminal/manifests/ingress.yaml
+          # Update ArgoCD application.yaml
+          if [ -f "applications/terminal/application.yaml" ]; then
+            sed -i "s|YOUR_USERNAME|${REPO_USERNAME}|g" applications/terminal/application.yaml
+          fi
           
-          # Update terminal application.yaml with GitHub username
-          sed -i "s|YOUR_USERNAME|${REPO_USERNAME}|g" applications/terminal/application.yaml
+          # Update ingress with domain
+          if [ -f "${MANIFESTS_DIR}/ingress.yaml" ]; then
+            sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" ${MANIFESTS_DIR}/ingress.yaml
+            sed -i "s|terminal\.YOUR_DOMAIN|terminal.${DOMAIN}|g" ${MANIFESTS_DIR}/ingress.yaml
+          fi
           
-          # Replace YOUR_REGISTRY placeholder with actual registry (will be updated with image tag in next step)
-          sed -i "s|YOUR_REGISTRY|${DOCKER_REGISTRY}|g" applications/terminal/manifests/frontend-deployment.yaml
-          sed -i "s|YOUR_REGISTRY|${DOCKER_REGISTRY}|g" applications/terminal/manifests/backend-deployment.yaml
+          # Replace YOUR_REGISTRY placeholder
+          if [ -f "${MANIFESTS_DIR}/frontend-deployment.yaml" ]; then
+            sed -i "s|YOUR_REGISTRY|${DOCKER_REGISTRY}|g" ${MANIFESTS_DIR}/frontend-deployment.yaml
+          fi
+          if [ -f "${MANIFESTS_DIR}/backend-deployment.yaml" ]; then
+            sed -i "s|YOUR_REGISTRY|${DOCKER_REGISTRY}|g" ${MANIFESTS_DIR}/backend-deployment.yaml
+          fi
           
-          echo "✅ Configuration applied successfully"
-
-      - name: Update deployment manifests with new image tags
-        run: |
+          # Update image tags
           SHORT_SHA="${{ steps.commit.outputs.SHORT_SHA }}"
+          if [ -f "${MANIFESTS_DIR}/frontend-deployment.yaml" ]; then
+            sed -i "s|image: ${DOCKER_REGISTRY}/terminal-frontend:.*|image: ${DOCKER_REGISTRY}/terminal-frontend:${SHORT_SHA}|g" ${MANIFESTS_DIR}/frontend-deployment.yaml
+            sed -i "s|imagePullPolicy: Always|imagePullPolicy: IfNotPresent|g" ${MANIFESTS_DIR}/frontend-deployment.yaml
+          fi
+          if [ -f "${MANIFESTS_DIR}/backend-deployment.yaml" ]; then
+            sed -i "s|image: ${DOCKER_REGISTRY}/terminal-backend:.*|image: ${DOCKER_REGISTRY}/terminal-backend:${SHORT_SHA}|g" ${MANIFESTS_DIR}/backend-deployment.yaml
+            sed -i "s|imagePullPolicy: Always|imagePullPolicy: IfNotPresent|g" ${MANIFESTS_DIR}/backend-deployment.yaml
+          fi
+          
+          # Commit and push
+          git add -A
+          if ! git diff --staged --quiet || ! git diff --quiet; then
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git commit -m "chore(terminal): sync from main and update image tags to ${SHORT_SHA}" || true
+            git push origin ${BRANCH}
+            echo "✅ ${BRANCH} branch updated"
+          else
+            echo "ℹ️  No changes to commit for ${BRANCH} branch"
+          fi
+
+      - name: Deploy to Flux (debian13-kubeadm-flux branch)
+        run: |
+          BRANCH="debian13-kubeadm-flux"
+          MANIFESTS_DIR="applications/terminal/manifests-kubeadm"
+          
+          echo "🔄 Setting up ${BRANCH} branch for Flux..."
+          
+          # Checkout main first to get latest code
+          git checkout main
+          
+          # Check if branch exists remotely
+          if git ls-remote --heads origin ${BRANCH} | grep -q ${BRANCH}; then
+            echo "Branch ${BRANCH} exists, checking it out"
+            git fetch origin ${BRANCH}
+            git checkout ${BRANCH}
+            # Merge latest from main to keep branch updated
+            if ! git merge main --no-edit --no-ff -X theirs 2>&1; then
+              echo "⚠️  Merge had conflicts or issues, but continuing..."
+              if [ -n "$(git ls-files -u)" ]; then
+                echo "Resolving conflicts by preferring main branch..."
+                git checkout --theirs .
+                git add -A
+                git commit -m "chore(terminal): merge main into ${BRANCH} (conflicts resolved)"
+              fi
+            else
+              echo "✅ Successfully merged main into ${BRANCH}"
+            fi
+          else
+            echo "Creating new ${BRANCH} branch from main"
+            git checkout -b ${BRANCH}
+          fi
+          
+          # Get configuration values from secrets
+          DOMAIN="${{ secrets.DOMAIN }}"
+          REPO_USERNAME="${{ secrets.REPO_USERNAME }}"
           DOCKER_REGISTRY="${{ env.DOCKER_REGISTRY }}"
           
-          echo "📦 Updating image tags to commit ${SHORT_SHA}..."
+          # Validate required secrets
+          if [ -z "${DOMAIN}" ] || [ -z "${REPO_USERNAME}" ] || [ -z "${DOCKER_REGISTRY}" ]; then
+            echo "⚠️  Skipping ${BRANCH} branch: Required secrets not set"
+            exit 0
+          fi
           
-          # Update frontend deployment image tag
-          # YOUR_REGISTRY was already replaced in previous step, so just update the tag
-          sed -i "s|image: ${DOCKER_REGISTRY}/terminal-frontend:.*|image: ${DOCKER_REGISTRY}/terminal-frontend:${SHORT_SHA}|g" \
-            applications/terminal/manifests/frontend-deployment.yaml
+          echo "🔧 Applying configuration for ${BRANCH} branch..."
+          echo "Domain: ${DOMAIN}"
+          echo "Repository Username: ${REPO_USERNAME}"
+          echo "Docker Registry: ${DOCKER_REGISTRY}"
           
-          # Update backend deployment image tag
-          sed -i "s|image: ${DOCKER_REGISTRY}/terminal-backend:.*|image: ${DOCKER_REGISTRY}/terminal-backend:${SHORT_SHA}|g" \
-            applications/terminal/manifests/backend-deployment.yaml
+          # Update Flux flux-setup.yaml
+          if [ -f "applications/terminal/flux-setup.yaml" ]; then
+            sed -i "s|YOUR_USERNAME|${REPO_USERNAME}|g" applications/terminal/flux-setup.yaml
+          fi
           
-          # Change imagePullPolicy to IfNotPresent for better caching
-          sed -i "s|imagePullPolicy: Always|imagePullPolicy: IfNotPresent|g" \
-            applications/terminal/manifests/frontend-deployment.yaml \
-            applications/terminal/manifests/backend-deployment.yaml
+          # Update ingress with domain
+          if [ -f "${MANIFESTS_DIR}/ingress.yaml" ]; then
+            sed -i "s|YOUR_DOMAIN|${DOMAIN}|g" ${MANIFESTS_DIR}/ingress.yaml
+            sed -i "s|terminal\.YOUR_DOMAIN|terminal.${DOMAIN}|g" ${MANIFESTS_DIR}/ingress.yaml
+          fi
           
-          echo "✅ Image tags updated"
-
-      - name: Check for changes
-        id: check-changes
-        run: |
-          # Stage all changes (including merge from main and manifest updates)
+          # Replace YOUR_REGISTRY placeholder
+          if [ -f "${MANIFESTS_DIR}/frontend-deployment.yaml" ]; then
+            sed -i "s|YOUR_REGISTRY|${DOCKER_REGISTRY}|g" ${MANIFESTS_DIR}/frontend-deployment.yaml
+          fi
+          if [ -f "${MANIFESTS_DIR}/backend-deployment.yaml" ]; then
+            sed -i "s|YOUR_REGISTRY|${DOCKER_REGISTRY}|g" ${MANIFESTS_DIR}/backend-deployment.yaml
+          fi
+          
+          # Update image tags
+          SHORT_SHA="${{ steps.commit.outputs.SHORT_SHA }}"
+          if [ -f "${MANIFESTS_DIR}/frontend-deployment.yaml" ]; then
+            sed -i "s|image: ${DOCKER_REGISTRY}/terminal-frontend:.*|image: ${DOCKER_REGISTRY}/terminal-frontend:${SHORT_SHA}|g" ${MANIFESTS_DIR}/frontend-deployment.yaml
+            sed -i "s|imagePullPolicy: Always|imagePullPolicy: IfNotPresent|g" ${MANIFESTS_DIR}/frontend-deployment.yaml
+          fi
+          if [ -f "${MANIFESTS_DIR}/backend-deployment.yaml" ]; then
+            sed -i "s|image: ${DOCKER_REGISTRY}/terminal-backend:.*|image: ${DOCKER_REGISTRY}/terminal-backend:${SHORT_SHA}|g" ${MANIFESTS_DIR}/backend-deployment.yaml
+            sed -i "s|imagePullPolicy: Always|imagePullPolicy: IfNotPresent|g" ${MANIFESTS_DIR}/backend-deployment.yaml
+          fi
+          
+          # Commit and push
           git add -A
-          if git diff --staged --quiet && git diff --quiet; then
-            echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
-            echo "ℹ️  No changes detected"
+          if ! git diff --staged --quiet || ! git diff --quiet; then
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git commit -m "chore(terminal): sync from main and update image tags to ${SHORT_SHA}" || true
+            git push origin ${BRANCH}
+            echo "✅ ${BRANCH} branch updated"
           else
-            echo "HAS_CHANGES=true" >> $GITHUB_OUTPUT
-            echo "📝 Changes detected (merge from main and/or manifest updates)"
-            git status
+            echo "ℹ️  No changes to commit for ${BRANCH} branch"
           fi
-
-      - name: Commit and push changes to deploy branch
-        if: steps.check-changes.outputs.HAS_CHANGES == 'true'
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          # Check if we have uncommitted changes (merge might have already created a commit)
-          if ! git diff --quiet || ! git diff --cached --quiet; then
-            # We have uncommitted changes, commit them
-            git commit -m "chore(terminal): sync from main and update image tags to ${{ steps.commit.outputs.SHORT_SHA }}"
-          fi
-          # Push all commits (including merge commit if it was created)
-          git push origin deploy
 
       - name: Output deployment info
         run: |
@@ -229,5 +290,5 @@ jobs:
           echo "  Backend: ${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
           echo ""
           echo "📝 Deployment manifests updated with new image tags"
-          echo "🔄 ArgoCD will automatically sync the changes"
+          echo "🔄 ArgoCD (deploy branch) and Flux (debian13-kubeadm-flux branch) will automatically sync the changes"
 
