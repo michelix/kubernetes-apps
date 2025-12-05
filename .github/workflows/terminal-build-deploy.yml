@@ -113,6 +113,9 @@ jobs:
           
           echo "🔄 Setting up ${BRANCH} branch for ArgoCD..."
           
+          # Checkout main first to get latest code
+          git checkout main
+          
           # Check if deploy branch exists remotely
           if git ls-remote --heads origin ${BRANCH} | grep -q ${BRANCH}; then
             echo "Branch ${BRANCH} exists, checking it out"
