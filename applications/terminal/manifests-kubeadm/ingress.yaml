@@ -13,7 +13,7 @@ metadata:
     gethomepage.dev/group: "Kubernetes Services"
     gethomepage.dev/icon: terminal.png
 spec:
-  ingressClassName: traefik
+  ingressClassName: nginx
   rules:
   - host: terminal.yourdomain.com
     http:

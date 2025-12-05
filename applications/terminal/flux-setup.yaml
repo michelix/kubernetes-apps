@@ -9,7 +9,7 @@ spec:
   interval: 1m
   url: https://github.com/YOUR_USERNAME/kubernetes-apps.git
   ref:
-    branch: debian12-k3s-flux
+    branch: debian13-kubeadm-flux
 ---
 # Flux Kustomization
 apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
@@ -19,7 +19,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 5m
-  path: ./applications/terminal/manifests-k3s
+  path: ./applications/terminal/manifests-kubeadm
   prune: true
   sourceRef:
     kind: GitRepository
