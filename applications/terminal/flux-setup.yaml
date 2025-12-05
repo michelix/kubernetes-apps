@@ -7,7 +7,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1m
-  url: https://github.com/YOUR_USERNAME/kubernetes-apps.git
+  url: https://github.com/michelix/kubernetes-apps.git
   ref:
     branch: debian13-kubeadm-flux
 ---
