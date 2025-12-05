@@ -15,7 +15,7 @@ interface CommandHistory {
 const NEOFETCH_OUTPUT = `                    
                  ----                         web-user@terminal
         ===      ====      ===                ---------------
-       ====      ====      ====               OS: Kubernetes
+       ====      ====      ====               OS: Kubernetes 2025
         ====     ====     ====                Host: Terminal Web App
         +++++    ++++    +++++                Kernel: Next.js 14
 +++      ++++    ++++    ++++      +++        Uptime: Just started
