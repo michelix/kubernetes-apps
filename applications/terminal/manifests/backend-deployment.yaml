@@ -18,7 +18,7 @@ spec:
       containers:
       - name: backend
         # Image will be replaced by configure.sh script
-        image: docker.io/michelix/terminal-backend:8e0a9b6
+        image: docker.io/michelix/terminal-backend:6507330
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
