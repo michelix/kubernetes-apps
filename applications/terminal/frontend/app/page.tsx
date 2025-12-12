@@ -77,8 +77,8 @@ export default function Terminal() {
   const [history, setHistory] = useState<CommandHistory[]>([])
   const [currentInput, setCurrentInput] = useState('')
   const [showCursor, setShowCursor] = useState(true)
-  const [isLoading, setIsLoading] = useState(false)
-  const [showLogo, setShowLogo] = useState(false)
+  const [isLoading] = useState(false)
+  const [showLogo] = useState(false)
   const [sessionId, setSessionId] = useState<string>('')
   const [displayStartIndex, setDisplayStartIndex] = useState(0)
   const [historyIndex, setHistoryIndex] = useState<number>(-1)
@@ -229,10 +229,10 @@ Version: ${backendVersion ?? 'unknown (backend version not available)'}` as stri
           session_id: effectiveSessionId,
         })
         output = response.data.output || response.data.error || 'Command executed'
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Handle different error types
         // Note: Backend sanitizes error messages in production to prevent information disclosure
-        if (error.response) {
+        if (axios.isAxiosError(error) && error.response) {
           // Backend returned an error response (400, 500, etc.)
           const status = error.response.status
           const detail = error.response.data?.detail
@@ -247,9 +247,12 @@ Version: ${backendVersion ?? 'unknown (backend version not available)'}` as stri
             // Other errors
             output = `Error: ${detail || 'An error occurred'}`
           }
-        } else {
+        } else if (axios.isAxiosError(error)) {
           // Network error or other issue
           output = `Error: ${error.message || 'Failed to connect to server'}`
+        } else {
+          // Unknown error type
+          output = 'Error: Failed to connect to server'
         }
       }
     }
@@ -262,7 +265,7 @@ Version: ${backendVersion ?? 'unknown (backend version not available)'}` as stri
         timestamp: new Date(),
       },
     ])
-  }, [history])
+  }, [history, backendVersion, sessionId])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {

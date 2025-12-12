@@ -159,9 +159,8 @@ describe('Terminal Component', () => {
       const user = userEvent.setup()
       render(<Terminal />)
 
-      const input = screen.getByRole('textbox')
-      
       // Execute a few commands first
+      const input = screen.getByRole('textbox')
       await user.type(input, 'help')
       await user.keyboard('{Enter}')
       await waitFor(() => {
