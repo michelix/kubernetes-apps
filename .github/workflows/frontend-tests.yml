@@ -150,11 +150,12 @@ jobs:
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.coverage.outputs.coverage != '0'
         with:
           name: coverage-report
           path: coverage/
           retention-days: 7
+          if-no-files-found: warn
 
   security:
     name: Security Checks
