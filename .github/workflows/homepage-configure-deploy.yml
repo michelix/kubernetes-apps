@@ -54,15 +54,15 @@ jobs:
             git fetch origin deploy
             git checkout deploy
             # Merge latest from main to keep deploy branch updated
-            # Use --strategy-option=theirs to prefer main's version in case of conflicts
-            if ! git merge main --no-edit --no-ff -X theirs 2>&1; then
+            # Use -X ours to prefer main's version in conflicts (ours = main, theirs = deploy)
+            if ! git merge main --no-edit --no-ff -X ours 2>&1; then
               echo "  Merge had conflicts or issues, but continuing..."
               # Check if we're in a conflicted state
               if [ -n "$(git ls-files -u)" ]; then
                 echo "Resolving conflicts by preferring main branch..."
-                git checkout --theirs .
+                git checkout --ours .
                 git add -A
-                git commit -m "chore(homepage): merge main into deploy (conflicts resolved)"
+                git commit -m "chore(homepage): merge main into deploy (conflicts resolved)" || true
               fi
             else
               echo " Successfully merged main into deploy"
