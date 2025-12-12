@@ -71,6 +71,7 @@ jobs:
         id: test
         run: |
           echo "Running test suite"
+          set -o pipefail
           npm run test:coverage 2>&1 | tee test-output.txt
           echo "All tests passed"
 
@@ -103,7 +104,6 @@ jobs:
         run: |
           echo "Checking test coverage"
           if [ -f coverage/coverage-summary.json ]; then
-            COVERAGE=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.lines.pct)")
             LINES_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.lines.pct)")
             STATEMENTS_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.statements.pct)")
             FUNCTIONS_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.functions.pct)")
