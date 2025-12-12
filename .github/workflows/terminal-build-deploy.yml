@@ -122,13 +122,14 @@ jobs:
             git fetch origin ${BRANCH}
             git checkout ${BRANCH}
             # Merge latest from main to keep branch updated
-            if ! git merge main --no-edit --no-ff -X theirs 2>&1; then
+            # Use -X ours to prefer main's version in conflicts (ours = main, theirs = ${BRANCH})
+            if ! git merge main --no-edit --no-ff -X ours 2>&1; then
               echo "  Merge had conflicts or issues, but continuing..."
               if [ -n "$(git ls-files -u)" ]; then
                 echo "Resolving conflicts by preferring main branch..."
-                git checkout --theirs .
+                git checkout --ours .
                 git add -A
-                git commit -m "chore(terminal): merge main into ${BRANCH} (conflicts resolved)"
+                git commit -m "chore(terminal): merge main into ${BRANCH} (conflicts resolved)" || true
               fi
             else
               echo " Successfully merged main into ${BRANCH}"
@@ -212,13 +213,14 @@ jobs:
             git fetch origin ${BRANCH}
             git checkout ${BRANCH}
             # Merge latest from main to keep branch updated
-            if ! git merge main --no-edit --no-ff -X theirs 2>&1; then
+            # Use -X ours to prefer main's version in conflicts (ours = main, theirs = ${BRANCH})
+            if ! git merge main --no-edit --no-ff -X ours 2>&1; then
               echo "  Merge had conflicts or issues, but continuing..."
               if [ -n "$(git ls-files -u)" ]; then
                 echo "Resolving conflicts by preferring main branch..."
-                git checkout --theirs .
+                git checkout --ours .
                 git add -A
-                git commit -m "chore(terminal): merge main into ${BRANCH} (conflicts resolved)"
+                git commit -m "chore(terminal): merge main into ${BRANCH} (conflicts resolved)" || true
               fi
             else
               echo " Successfully merged main into ${BRANCH}"
