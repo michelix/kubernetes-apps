@@ -81,9 +81,10 @@ jobs:
         run: |
           if [ -f test-output.txt ]; then
             # Extract test results from Jest output
-            TESTS_PASSED=$(grep -oP '\d+(?= passed)' test-output.txt | head -1 || echo "0")
-            TESTS_FAILED=$(grep -oP '\d+(?= failed)' test-output.txt | head -1 || echo "0")
-            TEST_SUITES=$(grep -oP '\d+(?= passed.*total)' test-output.txt | head -1 || echo "0")
+            # Jest format: "Test Suites: X passed, Y total" on one line, "Tests: X passed, Y total" on another
+            TEST_SUITES=$(grep "Test Suites:" test-output.txt | grep -oP '\d+(?=\s+passed)' | head -1 || echo "0")
+            TESTS_PASSED=$(grep "Tests:" test-output.txt | grep -oP '\d+(?=\s+passed)' | head -1 || echo "0")
+            TESTS_FAILED=$(grep "Tests:" test-output.txt | grep -oP '\d+(?=\s+failed)' | head -1 || echo "0")
             
             echo "tests_passed=${TESTS_PASSED:-0}" >> $GITHUB_OUTPUT
             echo "tests_failed=${TESTS_FAILED:-0}" >> $GITHUB_OUTPUT
