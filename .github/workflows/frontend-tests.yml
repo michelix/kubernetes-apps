@@ -117,10 +117,30 @@ jobs:
         if: always()
         run: |
           echo "Checking coverage directory..."
-          ls -la coverage/ 2>&1 || echo "Coverage directory does not exist"
           echo "Current directory: $(pwd)"
-          echo "Files in current directory:"
-          ls -la | head -20
+          if [ -d coverage ]; then
+            echo "Coverage directory exists"
+            echo "Contents of coverage directory:"
+            ls -la coverage/
+            echo ""
+            echo "Checking for coverage-summary.json:"
+            if [ -f coverage/coverage-summary.json ]; then
+              echo "✓ coverage-summary.json found"
+              ls -lh coverage/coverage-summary.json
+            else
+              echo "✗ coverage-summary.json NOT found"
+            fi
+            echo ""
+            echo "Checking for lcov-report:"
+            if [ -d coverage/lcov-report ]; then
+              echo "✓ lcov-report directory found"
+              ls -la coverage/lcov-report/ | head -10
+            else
+              echo "✗ lcov-report directory NOT found"
+            fi
+          else
+            echo "✗ Coverage directory does not exist"
+          fi
 
       - name: Check test coverage threshold
         id: coverage
@@ -183,7 +203,7 @@ jobs:
         if: always()
         with:
           name: coverage-report
-          path: coverage/
+          path: applications/terminal/frontend/coverage/
           retention-days: 7
           if-no-files-found: warn
 
