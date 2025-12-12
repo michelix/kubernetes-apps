@@ -14,7 +14,7 @@ npm run dev
 # Run tests
 npm test
 
-# Run tests with coverage
+# Run tests with coverage (use npm script, not jest directly)
 npm run test:coverage
 
 # Run linter
