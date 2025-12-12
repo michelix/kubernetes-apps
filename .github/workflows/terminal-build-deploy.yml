@@ -38,20 +38,20 @@ jobs:
           DOCKER_REGISTRY_PATH="${{ secrets.DOCKER_REGISTRY_PATH }}"
           
           if [ -z "${DOCKERHUB_USERNAME}" ] || [ "${DOCKERHUB_USERNAME}" = "" ]; then
-            echo "❌ Error: DOCKERHUB_USERNAME secret is not set or is empty"
+            echo "Error: DOCKERHUB_USERNAME secret is not set or is empty"
             echo "Please set DOCKERHUB_USERNAME in repository secrets (your Docker Hub login email)"
             exit 1
           fi
           
           if [ -z "${DOCKER_REGISTRY_PATH}" ] || [ "${DOCKER_REGISTRY_PATH}" = "" ]; then
-            echo "❌ Error: DOCKER_REGISTRY_PATH secret is not set or is empty"
+            echo "Error: DOCKER_REGISTRY_PATH secret is not set or is empty"
             echo "Please set DOCKER_REGISTRY_PATH in repository secrets (your Docker Hub organization/username for images, e.g., 'michelix')"
             exit 1
           fi
           
           DOCKER_REGISTRY="docker.io/${DOCKER_REGISTRY_PATH}"
           echo "DOCKER_REGISTRY=${DOCKER_REGISTRY}" >> $GITHUB_ENV
-          echo "✅ Using registry: docker.io/${DOCKER_REGISTRY_PATH}"
+          echo "Using registry: docker.io/${DOCKER_REGISTRY_PATH}"
           echo "Registry path: ${DOCKER_REGISTRY}"
           echo "Docker Hub login: ${DOCKERHUB_USERNAME}"
 
@@ -75,10 +75,10 @@ jobs:
       - name: Verify Docker Registry
         run: |
           if [ -z "${{ env.DOCKER_REGISTRY }}" ]; then
-            echo "❌ Error: DOCKER_REGISTRY environment variable is not set"
+            echo "Error: DOCKER_REGISTRY environment variable is not set"
             exit 1
           fi
-          echo "✅ Docker Registry verified: ${{ env.DOCKER_REGISTRY }}"
+          echo "Docker Registry verified: ${{ env.DOCKER_REGISTRY }}"
           echo "Frontend image will be: ${{ env.DOCKER_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
           echo "Backend image will be: ${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
 
@@ -111,7 +111,7 @@ jobs:
           BRANCH="deploy"
           MANIFESTS_DIR="applications/terminal/manifests"
           
-          echo "🔄 Setting up ${BRANCH} branch for ArgoCD..."
+          echo " Setting up ${BRANCH} branch for ArgoCD..."
           
           # Checkout main first to get latest code
           git checkout main
@@ -123,7 +123,7 @@ jobs:
             git checkout ${BRANCH}
             # Merge latest from main to keep branch updated
             if ! git merge main --no-edit --no-ff -X theirs 2>&1; then
-              echo "⚠️  Merge had conflicts or issues, but continuing..."
+              echo "  Merge had conflicts or issues, but continuing..."
               if [ -n "$(git ls-files -u)" ]; then
                 echo "Resolving conflicts by preferring main branch..."
                 git checkout --theirs .
@@ -131,7 +131,7 @@ jobs:
                 git commit -m "chore(terminal): merge main into ${BRANCH} (conflicts resolved)"
               fi
             else
-              echo "✅ Successfully merged main into ${BRANCH}"
+              echo " Successfully merged main into ${BRANCH}"
             fi
           else
             echo "Creating new ${BRANCH} branch from main"
@@ -145,11 +145,11 @@ jobs:
           
           # Validate required secrets
           if [ -z "${DOMAIN}" ] || [ -z "${REPO_USERNAME}" ] || [ -z "${DOCKER_REGISTRY}" ]; then
-            echo "⚠️  Skipping ${BRANCH} branch: Required secrets not set"
+            echo "  Skipping ${BRANCH} branch: Required secrets not set"
             exit 0
           fi
           
-          echo "🔧 Applying configuration for ${BRANCH} branch..."
+          echo " Applying configuration for ${BRANCH} branch..."
           echo "Domain: ${DOMAIN}"
           echo "Repository Username: ${REPO_USERNAME}"
           echo "Docker Registry: ${DOCKER_REGISTRY}"
@@ -191,9 +191,9 @@ jobs:
             git config --local user.name "GitHub Action"
             git commit -m "chore(terminal): sync from main and update image tags to ${SHORT_SHA}" || true
             git push origin ${BRANCH}
-            echo "✅ ${BRANCH} branch updated"
+            echo " ${BRANCH} branch updated"
           else
-            echo "ℹ️  No changes to commit for ${BRANCH} branch"
+            echo "  No changes to commit for ${BRANCH} branch"
           fi
 
       - name: Deploy to Flux (debian13-kubeadm-flux branch)
@@ -201,7 +201,7 @@ jobs:
           BRANCH="debian13-kubeadm-flux"
           MANIFESTS_DIR="applications/terminal/manifests-kubeadm"
           
-          echo "🔄 Setting up ${BRANCH} branch for Flux..."
+          echo " Setting up ${BRANCH} branch for Flux..."
           
           # Checkout main first to get latest code
           git checkout main
@@ -213,7 +213,7 @@ jobs:
             git checkout ${BRANCH}
             # Merge latest from main to keep branch updated
             if ! git merge main --no-edit --no-ff -X theirs 2>&1; then
-              echo "⚠️  Merge had conflicts or issues, but continuing..."
+              echo "  Merge had conflicts or issues, but continuing..."
               if [ -n "$(git ls-files -u)" ]; then
                 echo "Resolving conflicts by preferring main branch..."
                 git checkout --theirs .
@@ -221,7 +221,7 @@ jobs:
                 git commit -m "chore(terminal): merge main into ${BRANCH} (conflicts resolved)"
               fi
             else
-              echo "✅ Successfully merged main into ${BRANCH}"
+              echo " Successfully merged main into ${BRANCH}"
             fi
           else
             echo "Creating new ${BRANCH} branch from main"
@@ -235,11 +235,11 @@ jobs:
           
           # Validate required secrets
           if [ -z "${CLOUDFLARE_TERMINAL_DOMAIN}" ] || [ -z "${REPO_USERNAME}" ] || [ -z "${DOCKER_REGISTRY}" ]; then
-            echo "⚠️  Skipping ${BRANCH} branch: Required secrets not set"
+            echo "Skipping ${BRANCH} branch: Required secrets not set"
             exit 0
           fi
           
-          echo "🔧 Applying configuration for ${BRANCH} branch..."
+          echo " Applying configuration for ${BRANCH} branch..."
           echo "Cloudflare Terminal Domain: ${CLOUDFLARE_TERMINAL_DOMAIN}"
           echo "Repository Username: ${REPO_USERNAME}"
           echo "Docker Registry: ${DOCKER_REGISTRY}"
@@ -280,17 +280,17 @@ jobs:
             git config --local user.name "GitHub Action"
             git commit -m "chore(terminal): sync from main and update image tags to ${SHORT_SHA}" || true
             git push origin ${BRANCH}
-            echo "✅ ${BRANCH} branch updated"
+            echo " ${BRANCH} branch updated"
           else
-            echo "ℹ️  No changes to commit for ${BRANCH} branch"
+            echo "  No changes to commit for ${BRANCH} branch"
           fi
 
       - name: Output deployment info
         run: |
-          echo "✅ Images built and pushed:"
+          echo " Images built and pushed:"
           echo "  Frontend: ${{ env.DOCKER_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
           echo "  Backend: ${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
           echo ""
           echo "📝 Deployment manifests updated with new image tags"
-          echo "🔄 ArgoCD (deploy branch) and Flux (debian13-kubeadm-flux branch) will automatically sync the changes"
+          echo " ArgoCD (deploy branch) and Flux (debian13-kubeadm-flux branch) will automatically sync the changes"
 

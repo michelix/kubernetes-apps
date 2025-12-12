@@ -59,12 +59,18 @@ Type a command and press Enter to execute.`
 // Generate or retrieve session ID from localStorage
 function getSessionId(): string {
   if (typeof window === 'undefined') return ''
-  const stored = localStorage.getItem('terminal_session_id')
-  if (stored) return stored
-  // Generate a new session ID (UUID-like)
-  const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
-  localStorage.setItem('terminal_session_id', sessionId)
-  return sessionId
+  try {
+    const stored = localStorage.getItem('terminal_session_id')
+    if (stored) return stored
+    // Generate a new session ID (UUID-like)
+    const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+    localStorage.setItem('terminal_session_id', sessionId)
+    return sessionId
+  } catch (error) {
+    // If localStorage fails (e.g., quota exceeded), generate a session ID without storing it
+    console.error('Error accessing localStorage for session ID:', error)
+    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+  }
 }
 
 export default function Terminal() {
@@ -215,10 +221,12 @@ Version: ${backendVersion ?? 'unknown (backend version not available)'}` as stri
     } else {
       // Try to execute on backend
       try {
+        // Use sessionId from state, or get it from localStorage as fallback
+        const effectiveSessionId = sessionId || (typeof window !== 'undefined' ? localStorage.getItem('terminal_session_id') || '' : '')
         const apiEndpoint = API_URL.startsWith('/') ? `${API_URL}/execute` : `${API_URL}/api/execute`
         const response = await axios.post(apiEndpoint, {
           command: trimmedCommand,
-          session_id: sessionId,
+          session_id: effectiveSessionId,
         })
         output = response.data.output || response.data.error || 'Command executed'
       } catch (error: any) {
