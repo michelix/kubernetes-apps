@@ -146,11 +146,16 @@ jobs:
         id: coverage
         run: |
           echo "Checking test coverage"
-          if [ -f coverage/coverage-summary.json ]; then
-            LINES_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.lines.pct)")
-            STATEMENTS_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.statements.pct)")
-            FUNCTIONS_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.functions.pct)")
-            BRANCHES_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.branches.pct)")
+          echo "Current directory: $(pwd)"
+          echo "Checking for coverage file..."
+          
+          COVERAGE_FILE="coverage/coverage-summary.json"
+          if [ -f "$COVERAGE_FILE" ]; then
+            echo "Found coverage file: $COVERAGE_FILE"
+            LINES_COV=$(node -e "const cov = require('./$COVERAGE_FILE'); console.log(cov.total.lines.pct)")
+            STATEMENTS_COV=$(node -e "const cov = require('./$COVERAGE_FILE'); console.log(cov.total.statements.pct)")
+            FUNCTIONS_COV=$(node -e "const cov = require('./$COVERAGE_FILE'); console.log(cov.total.functions.pct)")
+            BRANCHES_COV=$(node -e "const cov = require('./$COVERAGE_FILE'); console.log(cov.total.branches.pct)")
             
             echo "coverage=${LINES_COV}" >> $GITHUB_OUTPUT
             echo "Coverage Summary:"
@@ -167,7 +172,7 @@ jobs:
               echo "coverage_threshold_met=true" >> $GITHUB_OUTPUT
             fi
           else
-            echo "Coverage file not found at coverage/coverage-summary.json"
+            echo "Coverage file not found at $COVERAGE_FILE"
             echo "Checking if coverage directory exists..."
             if [ -d coverage ]; then
               echo "Coverage directory exists but coverage-summary.json is missing"
