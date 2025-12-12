@@ -121,7 +121,7 @@ jobs:
             echo "  No changes detected"
           else
             echo "HAS_CHANGES=true" >> $GITHUB_OUTPUT
-            echo "📝 Changes detected (merge from main and/or configuration updates)"
+            echo "Changes detected (merge from main and/or configuration updates)"
             git status
           fi
 

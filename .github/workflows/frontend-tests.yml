@@ -68,24 +68,83 @@ jobs:
           echo "Linting passed"
 
       - name: Run tests
+        id: test
         run: |
           echo "Running test suite"
-          npm run test:coverage
+          npm run test:coverage 2>&1 | tee test-output.txt
           echo "All tests passed"
 
+      - name: Parse test results
+        id: test-results
+        if: always()
+        run: |
+          if [ -f test-output.txt ]; then
+            # Extract test results from Jest output
+            TESTS_PASSED=$(grep -oP '\d+(?= passed)' test-output.txt | head -1 || echo "0")
+            TESTS_FAILED=$(grep -oP '\d+(?= failed)' test-output.txt | head -1 || echo "0")
+            TEST_SUITES=$(grep -oP '\d+(?= passed.*total)' test-output.txt | head -1 || echo "0")
+            
+            echo "tests_passed=${TESTS_PASSED:-0}" >> $GITHUB_OUTPUT
+            echo "tests_failed=${TESTS_FAILED:-0}" >> $GITHUB_OUTPUT
+            echo "test_suites=${TEST_SUITES:-0}" >> $GITHUB_OUTPUT
+            
+            echo "Test Results:"
+            echo "  Test Suites: ${TEST_SUITES:-0}"
+            echo "  Tests Passed: ${TESTS_PASSED:-0}"
+            echo "  Tests Failed: ${TESTS_FAILED:-0}"
+          else
+            echo "tests_passed=0" >> $GITHUB_OUTPUT
+            echo "tests_failed=0" >> $GITHUB_OUTPUT
+            echo "test_suites=0" >> $GITHUB_OUTPUT
+          fi
+
       - name: Check test coverage threshold
+        id: coverage
         run: |
           echo "Checking test coverage"
           if [ -f coverage/coverage-summary.json ]; then
             COVERAGE=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.lines.pct)")
-            echo "Coverage: ${COVERAGE}%"
-            if (( $(echo "$COVERAGE < 70" | bc -l) )); then
-              echo "Warning: Coverage is below 70% (current: ${COVERAGE}%)"
+            LINES_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.lines.pct)")
+            STATEMENTS_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.statements.pct)")
+            FUNCTIONS_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.functions.pct)")
+            BRANCHES_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.branches.pct)")
+            
+            echo "coverage=${LINES_COV}" >> $GITHUB_OUTPUT
+            echo "Coverage Summary:"
+            echo "  Lines: ${LINES_COV}%"
+            echo "  Statements: ${STATEMENTS_COV}%"
+            echo "  Functions: ${FUNCTIONS_COV}%"
+            echo "  Branches: ${BRANCHES_COV}%"
+            
+            if (( $(echo "${LINES_COV} < 70" | bc -l) )); then
+              echo "Warning: Coverage is below 70% (current: ${LINES_COV}%)"
+              echo "coverage_threshold_met=false" >> $GITHUB_OUTPUT
             else
-              echo "Coverage meets threshold (70%+) - Current: ${COVERAGE}%"
+              echo "Coverage meets threshold (70%+) - Current: ${LINES_COV}%"
+              echo "coverage_threshold_met=true" >> $GITHUB_OUTPUT
             fi
           else
             echo "Coverage file not found"
+            echo "coverage=0" >> $GITHUB_OUTPUT
+            echo "coverage_threshold_met=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suites | ${{ steps.test-results.outputs.test_suites }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests Passed | ${{ steps.test-results.outputs.tests_passed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests Failed | ${{ steps.test-results.outputs.tests_failed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Coverage | ${{ steps.coverage.outputs.coverage }}% |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.coverage.outputs.coverage_threshold_met }}" = "true" ]; then
+            echo "Coverage threshold met (>=70%)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Warning: Coverage below threshold (<70%)" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Upload coverage artifact

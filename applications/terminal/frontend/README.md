@@ -1,5 +1,7 @@
 # Terminal Frontend
 
+Built with Next.js 15, React 19, TypeScript, and ESLint 9.
+
 ## Quick Start
 
 ```bash
@@ -36,10 +38,13 @@ npm run test:coverage
 frontend/
 ├── app/
 │   ├── page.tsx        # Main terminal component
-│   ├── page.test.tsx   # Component tests
+│   ├── page.test.tsx   # Component tests (33 tests)
 │   ├── layout.tsx      # Layout component
 │   └── globals.css     # Global styles
-├── jest.config.js       # Jest configuration
-├── jest.setup.js       # Test setup
-└── package.json        # Dependencies
+├── jest.config.js      # Jest configuration
+├── jest.setup.js       # Test setup (suppresses React 19 act() warnings)
+├── jest.d.ts          # TypeScript declarations for jest-dom
+├── package.json        # Dependencies (Next.js 15, React 19, ESLint 9)
+├── package-lock.json   # Locked dependency versions (for npm ci)
+└── README.md          # This file
 ```
