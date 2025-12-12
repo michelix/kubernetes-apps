@@ -19,7 +19,7 @@ spec:
       containers:
       - name: frontend
         # Image will be replaced by configure.sh script
-        image: docker.io/michelix/terminal-frontend:fc44577
+        image: docker.io/michelix/terminal-frontend:49fa56e
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
