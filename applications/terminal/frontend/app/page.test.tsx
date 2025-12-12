@@ -417,9 +417,11 @@ describe('Terminal Component', () => {
 
     it('should handle network errors', async () => {
       const user = userEvent.setup()
-      mockedAxios.post.mockRejectedValue({
-        message: 'Network Error',
-      })
+      // Create a network error that will be recognized by axios.isAxiosError
+      const networkError = new Error('Network Error')
+      mockedAxios.post.mockRejectedValue(networkError)
+      // Mock axios.isAxiosError to return true for our test error
+      const isAxiosErrorSpy = jest.spyOn(axios, 'isAxiosError').mockImplementation((error) => error === networkError)
 
       render(<Terminal />)
 
@@ -431,6 +433,9 @@ describe('Terminal Component', () => {
         expect(screen.getByText(/Error:/i)).toBeInTheDocument()
         expect(screen.getByText(/Network Error/i)).toBeInTheDocument()
       })
+
+      // Restore the spy to avoid affecting other tests
+      isAxiosErrorSpy.mockRestore()
     })
 
     it('should handle 400 validation errors', async () => {
