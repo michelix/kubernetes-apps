@@ -293,6 +293,6 @@ jobs:
           echo "  Frontend: ${{ env.DOCKER_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
           echo "  Backend: ${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ steps.commit.outputs.SHORT_SHA }}"
           echo ""
-          echo "📝 Deployment manifests updated with new image tags"
+          echo "Deployment manifests updated with new image tags"
           echo " ArgoCD (deploy branch) and Flux (debian13-kubeadm-flux branch) will automatically sync the changes"
 

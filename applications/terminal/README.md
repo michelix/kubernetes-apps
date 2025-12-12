@@ -4,7 +4,7 @@ A web-based terminal emulator with Debian-style appearance, built with Next.js, 
 
 ## 🏗️ Architecture
 
-- **Frontend**: Next.js 14 with TypeScript and React
+- **Frontend**: Next.js 15 with TypeScript and React 19
 - **Backend**: FastAPI (Python)
 - **Database**: PostgreSQL 15
 - **Orchestration**: Kubernetes with ArgoCD
