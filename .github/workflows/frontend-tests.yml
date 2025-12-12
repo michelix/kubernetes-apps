@@ -70,9 +70,22 @@ jobs:
       - name: Run tests
         id: test
         run: |
-          echo "Running test suite"
+          echo "Running test suite with coverage"
           set -o pipefail
           npm run test:coverage 2>&1 | tee test-output.txt
+          TEST_EXIT_CODE=${PIPESTATUS[0]}
+          echo "Test exit code: ${TEST_EXIT_CODE}"
+          echo "Checking if coverage was generated..."
+          if [ -d coverage ]; then
+            echo "Coverage directory exists"
+            ls -la coverage/ | head -10
+          else
+            echo "WARNING: Coverage directory was not created"
+          fi
+          if [ ${TEST_EXIT_CODE} -ne 0 ]; then
+            echo "Tests failed with exit code ${TEST_EXIT_CODE}"
+            exit ${TEST_EXIT_CODE}
+          fi
           echo "All tests passed"
 
       - name: Parse test results
@@ -100,6 +113,15 @@ jobs:
             echo "test_suites=0" >> $GITHUB_OUTPUT
           fi
 
+      - name: Debug coverage directory
+        if: always()
+        run: |
+          echo "Checking coverage directory..."
+          ls -la coverage/ 2>&1 || echo "Coverage directory does not exist"
+          echo "Current directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la | head -20
+
       - name: Check test coverage threshold
         id: coverage
         run: |
@@ -125,7 +147,15 @@ jobs:
               echo "coverage_threshold_met=true" >> $GITHUB_OUTPUT
             fi
           else
-            echo "Coverage file not found"
+            echo "Coverage file not found at coverage/coverage-summary.json"
+            echo "Checking if coverage directory exists..."
+            if [ -d coverage ]; then
+              echo "Coverage directory exists but coverage-summary.json is missing"
+              echo "Contents of coverage directory:"
+              ls -la coverage/ || echo "Cannot list coverage directory"
+            else
+              echo "Coverage directory does not exist"
+            fi
             echo "coverage=0" >> $GITHUB_OUTPUT
             echo "coverage_threshold_met=false" >> $GITHUB_OUTPUT
           fi
