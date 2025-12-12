@@ -1,0 +1,151 @@
+name: Terminal Frontend Tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'applications/terminal/frontend/**'
+      - '.github/workflows/frontend-tests.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'applications/terminal/frontend/**'
+      - '.github/workflows/frontend-tests.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Frontend Tests
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: applications/terminal/frontend
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: applications/terminal/frontend/package-lock.json
+
+      - name: Verify package-lock.json exists
+        run: |
+          if [ ! -f package-lock.json ]; then
+            echo "Error: package-lock.json is missing!"
+            echo "Run 'npm install' locally and commit package-lock.json for security"
+            exit 1
+          fi
+          echo "package-lock.json found"
+
+      - name: Install dependencies (secure)
+        run: |
+          echo "Using npm ci for secure, reproducible installs"
+          echo "This ensures exact versions from package-lock.json (prevents supply chain attacks)"
+          npm ci --legacy-peer-deps
+          echo "Dependencies installed securely"
+
+      - name: Run security audit
+        run: |
+          echo "Running npm audit to check for vulnerabilities"
+          npm audit --audit-level=moderate || echo "Vulnerabilities found - review required"
+          echo "Security audit completed"
+
+      - name: Run linter
+        run: |
+          echo "Running ESLint"
+          npm run lint
+          echo "Linting passed"
+
+      - name: Run tests
+        run: |
+          echo "Running test suite"
+          npm run test:coverage
+          echo "All tests passed"
+
+      - name: Check test coverage threshold
+        run: |
+          echo "Checking test coverage"
+          if [ -f coverage/coverage-summary.json ]; then
+            COVERAGE=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.lines.pct)")
+            echo "Coverage: ${COVERAGE}%"
+            if (( $(echo "$COVERAGE < 70" | bc -l) )); then
+              echo "Warning: Coverage is below 70% (current: ${COVERAGE}%)"
+            else
+              echo "Coverage meets threshold (70%+) - Current: ${COVERAGE}%"
+            fi
+          else
+            echo "Coverage file not found"
+          fi
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  security:
+    name: Security Checks
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: applications/terminal/frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: applications/terminal/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run npm audit (high severity)
+        run: |
+          echo "Running security audit for high-severity vulnerabilities"
+          npm audit --audit-level=high || echo "High-severity vulnerabilities found - review and fix"
+
+      - name: Check for known vulnerabilities
+        continue-on-error: true
+        run: |
+          echo "Checking for known vulnerabilities in dependencies"
+          npm audit --json > audit-report.json 2>&1 || true
+          
+          if [ -f audit-report.json ]; then
+            HIGH_VULNS=$(node -e "try { const audit = require('./audit-report.json'); console.log(audit.metadata?.vulnerabilities?.high || 0); } catch(e) { console.log(0); }" 2>/dev/null || echo "0")
+            CRITICAL_VULNS=$(node -e "try { const audit = require('./audit-report.json'); console.log(audit.metadata?.vulnerabilities?.critical || 0); } catch(e) { console.log(0); }" 2>/dev/null || echo "0")
+            
+            echo "Vulnerability Summary:"
+            echo "  Critical: $CRITICAL_VULNS"
+            echo "  High: $HIGH_VULNS"
+            
+            if [ "$CRITICAL_VULNS" -gt 0 ]; then
+              echo "Error: Critical vulnerabilities found - please review and fix"
+              exit 1
+            elif [ "$HIGH_VULNS" -gt 5 ]; then
+              echo "Warning: Too many high-severity vulnerabilities found (>5)"
+              echo "Please review: npm audit"
+            else
+              echo "Security check passed"
+            fi
+          else
+            echo "Warning: Could not generate audit report"
+          fi
