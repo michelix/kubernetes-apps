@@ -16,6 +16,9 @@ npm test
 
 # Run tests with coverage
 npm run test:coverage
+
+# Run linter
+npm run lint
 ```
 
 ## Security
