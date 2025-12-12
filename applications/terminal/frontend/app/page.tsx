@@ -15,7 +15,7 @@ interface CommandHistory {
 const NEOFETCH_OUTPUT = `                    
                  ----                         web-user@terminal
         ===      ====      ===                ---------------
-       ====      ====      ====               OS: Talos Kubernetes Terminal
+       ====      ====      ====               OS: Kubernetes 
         ====     ====     ====                Host: Terminal Web App
         +++++    ++++    +++++                Kernel: Next.js 14
 +++      ++++    ++++    ++++      +++        Uptime: Just started
@@ -41,29 +41,36 @@ Welcome to the Terminal
 `
 
 const HELP_TEXT = `Available commands:
-  help          - Show this help message
-  clear         - Clear the terminal
-  date          - Show current date and time
-  whoami        - Show current user
-  echo <text>   - Echo text back
-  ls            - List files (simulated)
-  pwd           - Print working directory
-  history       - Show command history
-  neofetch      - Display system information
-  about         - Show information about this terminal
-  exit          - Exit the terminal (reloads page)
+  help               - Show this help message
+  clear              - Clear the terminal
+  date               - Show current date and time
+  whoami             - Show current user
+  echo <text>        - Echo text back
+  ls                 - List files (simulated)
+  pwd                - Print working directory
+  history            - Show command history
+  neofetch           - Display system information
+  about              - Show information about this terminal
+  weather [location] - Fetch weather information for a location
+  exit               - Exit the terminal (reloads page)
 
 Type a command and press Enter to execute.`
 
 // Generate or retrieve session ID from localStorage
 function getSessionId(): string {
   if (typeof window === 'undefined') return ''
-  const stored = localStorage.getItem('terminal_session_id')
-  if (stored) return stored
-  // Generate a new session ID (UUID-like)
-  const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
-  localStorage.setItem('terminal_session_id', sessionId)
-  return sessionId
+  try {
+    const stored = localStorage.getItem('terminal_session_id')
+    if (stored) return stored
+    // Generate a new session ID (UUID-like)
+    const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+    localStorage.setItem('terminal_session_id', sessionId)
+    return sessionId
+  } catch (error) {
+    // If localStorage fails (e.g., quota exceeded), generate a session ID without storing it
+    console.error('Error accessing localStorage for session ID:', error)
+    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+  }
 }
 
 export default function Terminal() {
@@ -82,6 +89,26 @@ export default function Terminal() {
   // Initialize session ID on mount
   useEffect(() => {
     setSessionId(getSessionId())
+  }, [])
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const stored = localStorage.getItem('terminal_history')
+      if (stored) {
+        const parsed = JSON.parse(stored) as { command: string; output: string; timestamp: string }[]
+        setHistory(
+          parsed.map((h) => ({
+            command: h.command,
+            output: h.output,
+            timestamp: new Date(h.timestamp),
+          }))
+        )
+      }
+    } catch (error) {
+      console.error('Error loading history from localStorage:', error)
+    }
   }, [])
 
   // Fetch backend version from API root
@@ -114,6 +141,21 @@ export default function Terminal() {
   useEffect(() => {
     if (terminalRef.current) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight
+    }
+  }, [history])
+
+  // Persist history to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const serializable = history.map((h) => ({
+        command: h.command,
+        output: h.output,
+        timestamp: h.timestamp instanceof Date ? h.timestamp.toISOString() : new Date(h.timestamp).toISOString(),
+      }))
+      localStorage.setItem('terminal_history', JSON.stringify(serializable))
+    } catch (error) {
+      console.error('Error saving history to localStorage:', error)
     }
   }, [history])
 
@@ -159,49 +201,11 @@ export default function Terminal() {
     } else if (trimmedCommand === 'pwd') {
       output = '/home/web-user'
     } else if (trimmedCommand === 'history') {
-      // Fetch history from backend database for this session
-      try {
-        const historyEndpoint = API_URL.startsWith('/') ? `${API_URL}/v1/history` : `${API_URL}/api/v1/history`
-        const response = await axios.get(historyEndpoint, { 
-          params: { 
-            session_id: sessionId,
-            limit: 50 
-          } 
-        })
-        const backendHistory = response.data.history || []
-        if (backendHistory.length > 0) {
-          output = backendHistory.map((h: any, i: number) => 
-            `${i + 1}  ${h.command} (${new Date(h.timestamp).toLocaleString()})`
-          ).join('\n')
-        } else {
-          // Fallback to local history if backend has no entries
-          output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history'
-        }
-      } catch (error: any) {
-        // Handle errors from history endpoint
-        // Note: Backend sanitizes error messages in production
-        if (error.response) {
-          const status = error.response.status
-          const detail = error.response.data?.detail
-          
-          if (status === 400) {
-            // Validation error - show generic message (backend sanitizes details)
-            output = `Error: ${detail || 'Invalid request'}`
-          } else if (status === 500) {
-            // Server error - fallback to local history
-            output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history (server error)'
-            console.error('Error fetching history from backend:', error)
-          } else {
-            // Other errors - fallback to local history
-            output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history'
-            console.error('Error fetching history from backend:', error)
-          }
-        } else {
-          // Network error - fallback to local history
-          output = history.map((h, i) => `${i + 1}  ${h.command}`).join('\n') || 'No history (connection error)'
-          console.error('Error fetching history from backend:', error)
-        }
-      }
+      // Show history from local state (which is persisted in localStorage)
+      const lines = history
+        .filter((h) => h.command)
+        .map((h, i) => `${i + 1}  ${h.command}`)
+      output = lines.join('\n') || 'No history'
     } else if (trimmedCommand === 'neofetch') {
       // Show ASCII logo plus backend version (if available)
       const versionText = backendVersion ? `\nVersion: ${backendVersion}` : ''
@@ -217,10 +221,12 @@ Version: ${backendVersion ?? 'unknown (backend version not available)'}` as stri
     } else {
       // Try to execute on backend
       try {
-        const apiEndpoint = API_URL.startsWith('/') ? `${API_URL}/v1/execute` : `${API_URL}/api/v1/execute`
+        // Use sessionId from state, or get it from localStorage as fallback
+        const effectiveSessionId = sessionId || (typeof window !== 'undefined' ? localStorage.getItem('terminal_session_id') || '' : '')
+        const apiEndpoint = API_URL.startsWith('/') ? `${API_URL}/execute` : `${API_URL}/api/execute`
         const response = await axios.post(apiEndpoint, {
           command: trimmedCommand,
-          session_id: sessionId,
+          session_id: effectiveSessionId,
         })
         output = response.data.output || response.data.error || 'Command executed'
       } catch (error: any) {

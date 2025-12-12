@@ -20,4 +20,9 @@ spec:
     automated:
       selfHeal: true
       prune: true
+  ignoreDifferences:
+    - group: ""
+      kind: PersistentVolumeClaim
+      jsonPointers:
+        - /spec/volumeName
 

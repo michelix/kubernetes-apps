@@ -1,0 +1,56 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: terminal-ingress
+  namespace: terminal
+  labels:
+    app.kubernetes.io/name: terminal-ingress
+    app.kubernetes.io/part-of: terminal
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: "Terminal"
+    gethomepage.dev/description: "Web-based Terminal Emulator"
+    gethomepage.dev/group: "Kubernetes Services"
+    gethomepage.dev/icon: terminal.png
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: CLOUDFLARE_TERMINAL_DOMAIN
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: terminal-frontend
+            port:
+              number: 80
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: terminal-backend
+            port:
+              number: 8000
+      - path: /docs
+        pathType: Exact
+        backend:
+          service:
+            name: terminal-backend
+            port:
+              number: 8000
+      - path: /redoc
+        pathType: Exact
+        backend:
+          service:
+            name: terminal-backend
+            port:
+              number: 8000
+      - path: /openapi.json
+        pathType: Exact
+        backend:
+          service:
+            name: terminal-backend
+            port:
+              number: 8000
+

@@ -26,18 +26,18 @@ jobs:
       - name: Validate required secrets
         run: |
           if [ -z "${{ secrets.DOMAIN }}" ]; then
-            echo "❌ Error: DOMAIN secret is not set"
+            echo " Error: DOMAIN secret is not set"
             echo "Please set DOMAIN in repository secrets (e.g., 'example.com')"
             exit 1
           fi
           
           if [ -z "${{ secrets.REPO_USERNAME }}" ]; then
-            echo "❌ Error: REPO_USERNAME secret is not set"
+            echo " Error: REPO_USERNAME secret is not set"
             echo "Please set REPO_USERNAME in repository secrets (your GitHub username)"
             exit 1
           fi
           
-          echo "✅ Required secrets validated"
+          echo " Required secrets validated"
           echo "Domain: ${{ secrets.DOMAIN }}"
           echo "GitHub Username: ${{ secrets.REPO_USERNAME }}"
 
@@ -56,7 +56,7 @@ jobs:
             # Merge latest from main to keep deploy branch updated
             # Use --strategy-option=theirs to prefer main's version in case of conflicts
             if ! git merge main --no-edit --no-ff -X theirs 2>&1; then
-              echo "⚠️  Merge had conflicts or issues, but continuing..."
+              echo "  Merge had conflicts or issues, but continuing..."
               # Check if we're in a conflicted state
               if [ -n "$(git ls-files -u)" ]; then
                 echo "Resolving conflicts by preferring main branch..."
@@ -65,7 +65,7 @@ jobs:
                 git commit -m "chore(homepage): merge main into deploy (conflicts resolved)"
               fi
             else
-              echo "✅ Successfully merged main into deploy"
+              echo " Successfully merged main into deploy"
             fi
           else
             echo "Creating new deploy branch from main"
@@ -87,7 +87,7 @@ jobs:
           LONGITUDE="${LONGITUDE:-0.0}"
           TIMEZONE="${TIMEZONE:-Europe/Berlin}"
           
-          echo "🔧 Configuring homepage manifests..."
+          echo " Configuring homepage manifests..."
           echo "Domain: ${DOMAIN}"
           echo "Location: ${LOCATION}"
           echo "Coordinates: ${LATITUDE}, ${LONGITUDE}"
@@ -109,7 +109,7 @@ jobs:
           # Update homepage application.yaml
           sed -i "s|YOUR_USERNAME|${REPO_USERNAME}|g" applications/homepage/application.yaml
           
-          echo "✅ Configuration applied successfully"
+          echo " Configuration applied successfully"
 
       - name: Check for changes
         id: check-changes
@@ -118,7 +118,7 @@ jobs:
           git add -A
           if git diff --staged --quiet && git diff --quiet; then
             echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
-            echo "ℹ️  No changes detected"
+            echo "  No changes detected"
           else
             echo "HAS_CHANGES=true" >> $GITHUB_OUTPUT
             echo "📝 Changes detected (merge from main and/or configuration updates)"
@@ -138,7 +138,7 @@ jobs:
 
       - name: Output deployment info
         run: |
-          echo "✅ Homepage manifests configured and pushed to deploy branch"
+          echo " Homepage manifests configured and pushed to deploy branch"
           echo "Domain: ${{ secrets.DOMAIN }}"
-          echo "🔄 ArgoCD will automatically sync the changes from deploy branch"
+          echo " ArgoCD will automatically sync the changes from deploy branch"
 
