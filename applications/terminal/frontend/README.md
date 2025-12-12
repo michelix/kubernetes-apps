@@ -14,8 +14,12 @@ npm run dev
 # Run tests
 npm test
 
-# Run tests with coverage (use npm script, not jest directly)
+# Run tests with coverage (generates coverage/ directory)
 npm run test:coverage
+
+# View coverage HTML report (after running test:coverage above)
+# Open in browser: coverage/lcov-report/index.html
+# Or use: open coverage/lcov-report/index.html (Mac) or xdg-open (Linux)
 
 # Run linter
 npm run lint

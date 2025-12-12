@@ -70,9 +70,22 @@ jobs:
       - name: Run tests
         id: test
         run: |
-          echo "Running test suite"
+          echo "Running test suite with coverage"
           set -o pipefail
           npm run test:coverage 2>&1 | tee test-output.txt
+          TEST_EXIT_CODE=${PIPESTATUS[0]}
+          echo "Test exit code: ${TEST_EXIT_CODE}"
+          echo "Checking if coverage was generated..."
+          if [ -d coverage ]; then
+            echo "Coverage directory exists"
+            ls -la coverage/ | head -10
+          else
+            echo "WARNING: Coverage directory was not created"
+          fi
+          if [ ${TEST_EXIT_CODE} -ne 0 ]; then
+            echo "Tests failed with exit code ${TEST_EXIT_CODE}"
+            exit ${TEST_EXIT_CODE}
+          fi
           echo "All tests passed"
 
       - name: Parse test results
@@ -100,15 +113,49 @@ jobs:
             echo "test_suites=0" >> $GITHUB_OUTPUT
           fi
 
+      - name: Debug coverage directory
+        if: always()
+        run: |
+          echo "Checking coverage directory..."
+          echo "Current directory: $(pwd)"
+          if [ -d coverage ]; then
+            echo "Coverage directory exists"
+            echo "Contents of coverage directory:"
+            ls -la coverage/
+            echo ""
+            echo "Checking for coverage-summary.json:"
+            if [ -f coverage/coverage-summary.json ]; then
+              echo "✓ coverage-summary.json found"
+              ls -lh coverage/coverage-summary.json
+            else
+              echo "✗ coverage-summary.json NOT found"
+            fi
+            echo ""
+            echo "Checking for lcov-report:"
+            if [ -d coverage/lcov-report ]; then
+              echo "✓ lcov-report directory found"
+              ls -la coverage/lcov-report/ | head -10
+            else
+              echo "✗ lcov-report directory NOT found"
+            fi
+          else
+            echo "✗ Coverage directory does not exist"
+          fi
+
       - name: Check test coverage threshold
         id: coverage
         run: |
           echo "Checking test coverage"
-          if [ -f coverage/coverage-summary.json ]; then
-            LINES_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.lines.pct)")
-            STATEMENTS_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.statements.pct)")
-            FUNCTIONS_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.functions.pct)")
-            BRANCHES_COV=$(node -e "const cov = require('./coverage/coverage-summary.json'); console.log(cov.total.branches.pct)")
+          echo "Current directory: $(pwd)"
+          echo "Checking for coverage file..."
+          
+          COVERAGE_FILE="coverage/coverage-summary.json"
+          if [ -f "$COVERAGE_FILE" ]; then
+            echo "Found coverage file: $COVERAGE_FILE"
+            LINES_COV=$(node -e "const cov = require('./$COVERAGE_FILE'); console.log(cov.total.lines.pct)")
+            STATEMENTS_COV=$(node -e "const cov = require('./$COVERAGE_FILE'); console.log(cov.total.statements.pct)")
+            FUNCTIONS_COV=$(node -e "const cov = require('./$COVERAGE_FILE'); console.log(cov.total.functions.pct)")
+            BRANCHES_COV=$(node -e "const cov = require('./$COVERAGE_FILE'); console.log(cov.total.branches.pct)")
             
             echo "coverage=${LINES_COV}" >> $GITHUB_OUTPUT
             echo "Coverage Summary:"
@@ -125,7 +172,15 @@ jobs:
               echo "coverage_threshold_met=true" >> $GITHUB_OUTPUT
             fi
           else
-            echo "Coverage file not found"
+            echo "Coverage file not found at $COVERAGE_FILE"
+            echo "Checking if coverage directory exists..."
+            if [ -d coverage ]; then
+              echo "Coverage directory exists but coverage-summary.json is missing"
+              echo "Contents of coverage directory:"
+              ls -la coverage/ || echo "Cannot list coverage directory"
+            else
+              echo "Coverage directory does not exist"
+            fi
             echo "coverage=0" >> $GITHUB_OUTPUT
             echo "coverage_threshold_met=false" >> $GITHUB_OUTPUT
           fi
@@ -153,8 +208,9 @@ jobs:
         if: always()
         with:
           name: coverage-report
-          path: coverage/
+          path: applications/terminal/frontend/coverage/
           retention-days: 7
+          if-no-files-found: warn
 
   security:
     name: Security Checks
