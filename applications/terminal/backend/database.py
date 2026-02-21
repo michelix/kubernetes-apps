@@ -1,5 +1,5 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, text
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 from datetime import datetime
@@ -27,14 +27,9 @@ class CommandHistory(Base):
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 def init_db():
-    """Initialize database tables - drops and recreates tables to ensure clean schema"""
+    """Initialize database tables without destructive schema resets."""
     try:
-        logger.info("Dropping existing tables...")
-        # Explicitly drop the command_history table if it exists (using raw SQL for reliability)
-        with engine.begin() as conn:
-            conn.execute(text("DROP TABLE IF EXISTS command_history CASCADE"))
-        logger.info("Creating fresh tables with new schema...")
-        # Create tables with fresh schema
+        logger.info("Ensuring database tables exist...")
         Base.metadata.create_all(bind=engine)
         logger.info("Database initialization completed successfully")
     except Exception as e:
