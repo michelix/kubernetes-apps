@@ -247,6 +247,20 @@ describe('Terminal Component', () => {
       randomSpy.mockRestore()
     })
 
+    it('should start tic-tac-toe game and show board', async () => {
+      const user = userEvent.setup()
+      render(<Terminal />)
+
+      const input = screen.getByRole('textbox')
+      await user.type(input, 'ttt start')
+      await user.keyboard('{Enter}')
+
+      await waitFor(() => {
+        expect(screen.getByText(/Tic-Tac-Toe started/i)).toBeInTheDocument()
+        expect(screen.getByText(/1 \| 2 \| 3/i)).toBeInTheDocument()
+      })
+    })
+
     it('should show help when pressing Enter with empty input', async () => {
       const user = userEvent.setup()
       render(<Terminal />)

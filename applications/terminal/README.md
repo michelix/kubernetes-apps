@@ -231,6 +231,10 @@ The service will appear in the "Kubernetes Services" section of your Homepage da
 - `guess <number>` - Submit a guess for the active game
 - `game status` - Show current game status
 - `game quit` - Quit the current game
+- `ttt start` - Start Tic-Tac-Toe (you are X)
+- `ttt <1-9>` - Place X on board position 1-9
+- `ttt status` - Show current Tic-Tac-Toe board
+- `ttt quit` - Quit Tic-Tac-Toe
 - `exit` - Reload the page
 
 ## 🔌 API Endpoints
