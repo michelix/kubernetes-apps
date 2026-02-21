@@ -349,6 +349,9 @@ docker run -d \
 - `SHOW_DETAILED_ERRORS`: Show detailed error messages in API responses
   - Set to `"true"` for development, `"false"` (default) for production
   - When disabled, generic error messages are returned to prevent information disclosure
+- `CORS_ALLOW_ORIGINS`: Comma-separated list of allowed origins for CORS
+  - Example: `"https://terminal.example.com,https://preview.example.com"`
+  - Use `"*"` only for local/dev scenarios
 - `API_VERSION`: Override the API version string
   - If not set, version is determined from build-time VERSION file or git tags
   - Falls back to `"1.0.0"` if no version source is available
