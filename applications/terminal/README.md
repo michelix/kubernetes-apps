@@ -227,6 +227,10 @@ The service will appear in the "Kubernetes Services" section of your Homepage da
     - Otherwise, displays usage instructions
   - Example: `weather London` or `weather Dornbirn`
   - Uses the wttr.in API service
+- `game start` - Start number guessing game (1-100)
+- `guess <number>` - Submit a guess for the active game
+- `game status` - Show current game status
+- `game quit` - Quit the current game
 - `exit` - Reload the page
 
 ## 🔌 API Endpoints

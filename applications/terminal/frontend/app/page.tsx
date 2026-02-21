@@ -12,6 +12,12 @@ interface CommandHistory {
   timestamp: Date
 }
 
+interface NumberGuessGameState {
+  active: boolean
+  target: number
+  attempts: number
+}
+
 const NEOFETCH_OUTPUT = `                    
                  ----                         web-user@terminal
         ===      ====      ===                ---------------
@@ -52,6 +58,10 @@ const HELP_TEXT = `Available commands:
   neofetch           - Display system information
   about              - Show information about this terminal
   weather [location] - Fetch weather information for a location
+  game start         - Start number guessing game (1-100)
+  guess <number>     - Submit a guess for the active game
+  game status        - Show current game status
+  game quit          - Quit the current game
   exit               - Exit the terminal (reloads page)
 
 Type a command and press Enter to execute.`
@@ -83,6 +93,11 @@ export default function Terminal() {
   const [displayStartIndex, setDisplayStartIndex] = useState(0)
   const [historyIndex, setHistoryIndex] = useState<number>(-1)
   const [backendVersion, setBackendVersion] = useState<string | null>(null)
+  const [numberGuessGame, setNumberGuessGame] = useState<NumberGuessGameState>({
+    active: false,
+    target: 0,
+    attempts: 0,
+  })
   const terminalRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -215,6 +230,44 @@ export default function Terminal() {
 Built with Next.js, FastAPI, and PostgreSQL
 Running on Kubernetes with ArgoCD
 Version: ${backendVersion ?? 'unknown (backend version not available)'}` as string
+    } else if (trimmedCommand === 'game start') {
+      const target = Math.floor(Math.random() * 100) + 1
+      setNumberGuessGame({ active: true, target, attempts: 0 })
+      output = '🎮 Number Guess started! Guess a number between 1 and 100.\nUse: guess <number>'
+    } else if (trimmedCommand === 'game status') {
+      if (!numberGuessGame.active) {
+        output = 'No active game. Start one with: game start'
+      } else {
+        output = `Game is running. Attempts: ${numberGuessGame.attempts}.\nUse: guess <number> or game quit`
+      }
+    } else if (trimmedCommand === 'game quit') {
+      if (!numberGuessGame.active) {
+        output = 'No active game to quit.'
+      } else {
+        setNumberGuessGame({ active: false, target: 0, attempts: 0 })
+        output = 'Game ended. Start a new one with: game start'
+      }
+    } else if (trimmedCommand.startsWith('guess ')) {
+      if (!numberGuessGame.active) {
+        output = 'No active game. Start one with: game start'
+      } else {
+        const value = Number.parseInt(trimmedCommand.split(' ')[1], 10)
+        if (Number.isNaN(value) || value < 1 || value > 100) {
+          output = 'Please enter a valid number between 1 and 100. Example: guess 42'
+        } else {
+          const attempts = numberGuessGame.attempts + 1
+          if (value === numberGuessGame.target) {
+            output = `🎉 Correct! ${value} was the secret number. Attempts: ${attempts}.`
+            setNumberGuessGame({ active: false, target: 0, attempts: 0 })
+          } else if (value < numberGuessGame.target) {
+            setNumberGuessGame((prev) => ({ ...prev, attempts }))
+            output = `Too low ⬇️  (attempt ${attempts})`
+          } else {
+            setNumberGuessGame((prev) => ({ ...prev, attempts }))
+            output = `Too high ⬆️  (attempt ${attempts})`
+          }
+        }
+      }
     } else if (trimmedCommand === 'exit') {
       window.location.reload()
       return
@@ -265,7 +318,7 @@ Version: ${backendVersion ?? 'unknown (backend version not available)'}` as stri
         timestamp: new Date(),
       },
     ])
-  }, [history, backendVersion, sessionId])
+  }, [history, backendVersion, sessionId, numberGuessGame])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
