@@ -12,6 +12,19 @@ interface CommandHistory {
   timestamp: Date
 }
 
+interface NumberGuessGameState {
+  active: boolean
+  target: number
+  attempts: number
+}
+
+interface TicTacToeState {
+  active: boolean
+  board: string[]
+  currentPlayer: 'X' | 'O'
+  winner: 'X' | 'O' | 'draw' | null
+}
+
 const NEOFETCH_OUTPUT = `                    
                  ----                         web-user@terminal
         ===      ====      ===                ---------------
@@ -52,6 +65,14 @@ const HELP_TEXT = `Available commands:
   neofetch           - Display system information
   about              - Show information about this terminal
   weather [location] - Fetch weather information for a location
+  game start         - Start number guessing game (1-100)
+  guess <number>     - Submit a guess for the active game
+  game status        - Show current game status
+  game quit          - Quit the current game
+  ttt start          - Start Tic-Tac-Toe (you are X)
+  ttt <1-9>          - Place X on board position 1-9
+  ttt status         - Show current Tic-Tac-Toe board
+  ttt quit           - Quit Tic-Tac-Toe
   exit               - Exit the terminal (reloads page)
 
 Type a command and press Enter to execute.`
@@ -73,6 +94,26 @@ function getSessionId(): string {
   }
 }
 
+function formatTicTacToeBoard(board: string[]): string {
+  const cells = board.map((cell, idx) => (cell === ' ' ? String(idx + 1) : cell))
+  return `${cells[0]} | ${cells[1]} | ${cells[2]}\n---------\n${cells[3]} | ${cells[4]} | ${cells[5]}\n---------\n${cells[6]} | ${cells[7]} | ${cells[8]}`
+}
+
+function getTicTacToeWinner(board: string[]): 'X' | 'O' | null {
+  const lines = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6],
+  ]
+
+  for (const [a, b, c] of lines) {
+    if (board[a] !== ' ' && board[a] === board[b] && board[b] === board[c]) {
+      return board[a] as 'X' | 'O'
+    }
+  }
+  return null
+}
+
 export default function Terminal() {
   const [history, setHistory] = useState<CommandHistory[]>([])
   const [currentInput, setCurrentInput] = useState('')
@@ -83,6 +124,17 @@ export default function Terminal() {
   const [displayStartIndex, setDisplayStartIndex] = useState(0)
   const [historyIndex, setHistoryIndex] = useState<number>(-1)
   const [backendVersion, setBackendVersion] = useState<string | null>(null)
+  const [numberGuessGame, setNumberGuessGame] = useState<NumberGuessGameState>({
+    active: false,
+    target: 0,
+    attempts: 0,
+  })
+  const [ticTacToe, setTicTacToe] = useState<TicTacToeState>({
+    active: false,
+    board: Array(9).fill(' '),
+    currentPlayer: 'X',
+    winner: null,
+  })
   const terminalRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -215,6 +267,100 @@ export default function Terminal() {
 Built with Next.js, FastAPI, and PostgreSQL
 Running on Kubernetes with ArgoCD
 Version: ${backendVersion ?? 'unknown (backend version not available)'}` as string
+    } else if (trimmedCommand === 'game start') {
+      const target = Math.floor(Math.random() * 100) + 1
+      setNumberGuessGame({ active: true, target, attempts: 0 })
+      output = '🎮 Number Guess started! Guess a number between 1 and 100.\nUse: guess <number>'
+    } else if (trimmedCommand === 'game status') {
+      if (!numberGuessGame.active) {
+        output = 'No active game. Start one with: game start'
+      } else {
+        output = `Game is running. Attempts: ${numberGuessGame.attempts}.\nUse: guess <number> or game quit`
+      }
+    } else if (trimmedCommand === 'game quit') {
+      if (!numberGuessGame.active) {
+        output = 'No active game to quit.'
+      } else {
+        setNumberGuessGame({ active: false, target: 0, attempts: 0 })
+        output = 'Game ended. Start a new one with: game start'
+      }
+    } else if (trimmedCommand.startsWith('guess ')) {
+      if (!numberGuessGame.active) {
+        output = 'No active game. Start one with: game start'
+      } else {
+        const value = Number.parseInt(trimmedCommand.split(' ')[1], 10)
+        if (Number.isNaN(value) || value < 1 || value > 100) {
+          output = 'Please enter a valid number between 1 and 100. Example: guess 42'
+        } else {
+          const attempts = numberGuessGame.attempts + 1
+          if (value === numberGuessGame.target) {
+            output = `🎉 Correct! ${value} was the secret number. Attempts: ${attempts}.`
+            setNumberGuessGame({ active: false, target: 0, attempts: 0 })
+          } else if (value < numberGuessGame.target) {
+            setNumberGuessGame((prev) => ({ ...prev, attempts }))
+            output = `Too low ⬇️  (attempt ${attempts})`
+          } else {
+            setNumberGuessGame((prev) => ({ ...prev, attempts }))
+            output = `Too high ⬆️  (attempt ${attempts})`
+          }
+        }
+      }
+    } else if (trimmedCommand === 'ttt start') {
+      const board = Array(9).fill(' ')
+      setTicTacToe({ active: true, board, currentPlayer: 'X', winner: null })
+      output = `🎮 Tic-Tac-Toe started! You are X.\nChoose a position with: ttt <1-9>\n\n${formatTicTacToeBoard(board)}`
+    } else if (trimmedCommand === 'ttt status') {
+      if (!ticTacToe.active) {
+        output = 'No active Tic-Tac-Toe game. Start one with: ttt start'
+      } else {
+        output = `${formatTicTacToeBoard(ticTacToe.board)}\n\nCurrent: ${ticTacToe.currentPlayer}`
+      }
+    } else if (trimmedCommand === 'ttt quit') {
+      if (!ticTacToe.active) {
+        output = 'No active Tic-Tac-Toe game to quit.'
+      } else {
+        setTicTacToe({ active: false, board: Array(9).fill(' '), currentPlayer: 'X', winner: null })
+        output = 'Tic-Tac-Toe ended. Start a new one with: ttt start'
+      }
+    } else if (trimmedCommand.startsWith('ttt ')) {
+      if (!ticTacToe.active) {
+        output = 'No active Tic-Tac-Toe game. Start one with: ttt start'
+      } else {
+        const pos = Number.parseInt(trimmedCommand.split(' ')[1], 10)
+        if (Number.isNaN(pos) || pos < 1 || pos > 9) {
+          output = 'Invalid move. Use a position from 1 to 9. Example: ttt 5'
+        } else if (ticTacToe.board[pos - 1] !== ' ') {
+          output = 'Cell already occupied. Choose another position.'
+        } else {
+          const newBoard = [...ticTacToe.board]
+          newBoard[pos - 1] = 'X'
+
+          const playerWin = getTicTacToeWinner(newBoard)
+          if (playerWin) {
+            setTicTacToe({ active: false, board: newBoard, currentPlayer: 'X', winner: playerWin })
+            output = `You win! 🏆\n\n${formatTicTacToeBoard(newBoard)}`
+          } else if (newBoard.every((cell) => cell !== ' ')) {
+            setTicTacToe({ active: false, board: newBoard, currentPlayer: 'X', winner: 'draw' })
+            output = `Draw 🤝\n\n${formatTicTacToeBoard(newBoard)}`
+          } else {
+            const free = newBoard.map((cell, idx) => (cell === ' ' ? idx : -1)).filter((idx) => idx >= 0)
+            const aiMove = free[Math.floor(Math.random() * free.length)]
+            newBoard[aiMove] = 'O'
+
+            const aiWin = getTicTacToeWinner(newBoard)
+            if (aiWin) {
+              setTicTacToe({ active: false, board: newBoard, currentPlayer: 'X', winner: aiWin })
+              output = `AI wins 🤖\n\n${formatTicTacToeBoard(newBoard)}`
+            } else if (newBoard.every((cell) => cell !== ' ')) {
+              setTicTacToe({ active: false, board: newBoard, currentPlayer: 'X', winner: 'draw' })
+              output = `Draw 🤝\n\n${formatTicTacToeBoard(newBoard)}`
+            } else {
+              setTicTacToe({ active: true, board: newBoard, currentPlayer: 'X', winner: null })
+              output = `${formatTicTacToeBoard(newBoard)}\n\nYour turn (X).`
+            }
+          }
+        }
+      }
     } else if (trimmedCommand === 'exit') {
       window.location.reload()
       return
@@ -265,7 +411,7 @@ Version: ${backendVersion ?? 'unknown (backend version not available)'}` as stri
         timestamp: new Date(),
       },
     ])
-  }, [history, backendVersion, sessionId])
+  }, [history, backendVersion, sessionId, numberGuessGame, ticTacToe])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {

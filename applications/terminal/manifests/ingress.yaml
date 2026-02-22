@@ -15,7 +15,7 @@ metadata:
 spec:
   ingressClassName: cilium
   rules:
-  - host: terminal.valentak.at
+  - host: terminal.YOUR_DOMAIN
     http:
       paths:
       - path: /

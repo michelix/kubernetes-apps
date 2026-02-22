@@ -73,8 +73,16 @@ app = FastAPI(
 )
 
 # CORS middleware
+# Configure via CORS_ALLOW_ORIGINS (comma-separated), e.g.:
+#   CORS_ALLOW_ORIGINS=https://terminal.example.com,https://preview.example.com
+cors_allow_origins_env = os.getenv("CORS_ALLOW_ORIGINS", "*").strip()
+if cors_allow_origins_env == "*":
+    cors_allow_origins = ["*"]
+else:
+    cors_allow_origins = [origin.strip() for origin in cors_allow_origins_env.split(",") if origin.strip()]
+
 cors_config = {
-    "allow_origins": ["*"],  # In production, specify your frontend domain
+    "allow_origins": cors_allow_origins,
     "allow_credentials": True,
     "allow_methods": ["*"],
     "allow_headers": ["*"],

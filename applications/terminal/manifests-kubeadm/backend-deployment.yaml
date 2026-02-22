@@ -27,7 +27,9 @@ spec:
         - name: DATABASE_URL
           value: "postgresql://terminal_user:terminal_pass@postgres:5432/terminal_db"
         - name: ENABLE_DOCS
-          value: "true"  # Set to "false" to disable API documentation (recommended for production)
+          value: "false"
+        - name: SHOW_DETAILED_ERRORS
+          value: "false"
         resources:
           requests:
             memory: "128Mi"

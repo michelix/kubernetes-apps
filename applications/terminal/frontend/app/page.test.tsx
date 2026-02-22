@@ -214,6 +214,53 @@ describe('Terminal Component', () => {
       })
     })
 
+    it('should start and play number guess game', async () => {
+      const user = userEvent.setup()
+      render(<Terminal />)
+
+      const input = screen.getByRole('textbox')
+
+      // Make game deterministic: target should be 51
+      const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.5)
+
+      await user.type(input, 'game start')
+      await user.keyboard('{Enter}')
+
+      await waitFor(() => {
+        expect(screen.getByText(/Number Guess started/i)).toBeInTheDocument()
+      })
+
+      await user.type(input, 'guess 40')
+      await user.keyboard('{Enter}')
+
+      await waitFor(() => {
+        expect(screen.getByText(/Too low/i)).toBeInTheDocument()
+      })
+
+      await user.type(input, 'guess 51')
+      await user.keyboard('{Enter}')
+
+      await waitFor(() => {
+        expect(screen.getByText(/Correct! 51 was the secret number/i)).toBeInTheDocument()
+      })
+
+      randomSpy.mockRestore()
+    })
+
+    it('should start tic-tac-toe game and show board', async () => {
+      const user = userEvent.setup()
+      render(<Terminal />)
+
+      const input = screen.getByRole('textbox')
+      await user.type(input, 'ttt start')
+      await user.keyboard('{Enter}')
+
+      await waitFor(() => {
+        expect(screen.getByText(/Tic-Tac-Toe started/i)).toBeInTheDocument()
+        expect(screen.getByText(/1 \| 2 \| 3/i)).toBeInTheDocument()
+      })
+    })
+
     it('should show help when pressing Enter with empty input', async () => {
       const user = userEvent.setup()
       render(<Terminal />)

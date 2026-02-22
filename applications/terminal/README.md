@@ -201,7 +201,7 @@ The service will appear in the "Kubernetes Services" section of your Homepage da
 
 - **Terminal-like UI**: Debian-style terminal appearance with green text on dark background
 - **Interactive Commands**: Execute various terminal commands
-- **Command History**: View and navigate through command history (stored in PostgreSQL, session-based)
+- **Command History**: View and navigate through command history (stored client-side in browser `localStorage`, session-based)
 - **Version Display**: Backend version automatically fetched and displayed in `neofetch` and `about` commands
 - **Weather Integration**: Fetch weather information using the `weather` command
 - **ASCII Art**: Displays ASCII logo on initial load
@@ -218,7 +218,7 @@ The service will appear in the "Kubernetes Services" section of your Homepage da
 - `echo <text>` - Echo text back
 - `ls` - List files (simulated)
 - `pwd` - Print working directory
-- `history` - Show command history from database
+- `history` - Show command history from browser session (`localStorage`)
 - `neofetch` - Display system information with backend version
 - `about` - Show information about the terminal (includes backend version)
 - `weather [location]` - Fetch weather information for a location
@@ -227,6 +227,14 @@ The service will appear in the "Kubernetes Services" section of your Homepage da
     - Otherwise, displays usage instructions
   - Example: `weather London` or `weather Dornbirn`
   - Uses the wttr.in API service
+- `game start` - Start number guessing game (1-100)
+- `guess <number>` - Submit a guess for the active game
+- `game status` - Show current game status
+- `game quit` - Quit the current game
+- `ttt start` - Start Tic-Tac-Toe (you are X)
+- `ttt <1-9>` - Place X on board position 1-9
+- `ttt status` - Show current Tic-Tac-Toe board
+- `ttt quit` - Quit Tic-Tac-Toe
 - `exit` - Reload the page
 
 ## 🔌 API Endpoints
@@ -263,25 +271,7 @@ The backend provides the following REST API endpoints:
       "error": null
     }
     ```
-  - The `session_id` is optional but recommended for session-based command history
-
-- **GET `/api/history`** - Retrieve command history for a session
-  - Query parameters:
-    - `session_id` (required): Session identifier
-    - `limit` (optional, default: 50): Maximum number of history entries to return
-  - Example: `GET /api/history?session_id=session_1234567890_abc123&limit=50`
-  - Response:
-    ```json
-    {
-      "history": [
-        {
-          "command": "ls",
-          "output": "file1.txt\nfile2.txt",
-          "timestamp": "2025-01-15T10:30:00Z"
-        }
-      ]
-    }
-    ```
+  - `session_id` is optional and validated, but command history is currently managed client-side in the frontend.
 
 ### Weather Command
 
@@ -351,15 +341,15 @@ docker run -d \
 - `DATABASE_URL`: PostgreSQL connection string
   - Format: `postgresql://user:password@host:port/database`
   - Kubernetes: `postgresql://terminal_user:terminal_pass@postgres:5432/terminal_db`
-- `DEFAULT_WEATHER_LOCATION`: Default location for weather command when no location is specified
+- `DEFAULT_WEATHER_LOCATION`: Optional default location for weather command when no location is specified
   - Example: `"Dornbirn"` or `"London,UK"`
   - Used when user runs `weather` without a location parameter
   - If not set, the `weather` command without a location will show usage instructions instead
-  - **Configuration**: Must be set in the backend deployment manifest at `applications/terminal/manifests/backend-deployment.yaml` in the `env` section:
+  - **Configuration**: Optional in `applications/terminal/manifests/backend-deployment.yaml`:
     ```yaml
     env:
     - name: DEFAULT_WEATHER_LOCATION
-      value: "Dornbirn"  # Your default location
+      value: "Dornbirn"  # Optional default location
     ```
 - `ENABLE_DOCS`: Enable API documentation endpoints (`/docs`, `/redoc`, `/openapi.json`)
   - Set to `"true"` for development, `"false"` (default) for production
@@ -367,28 +357,25 @@ docker run -d \
 - `SHOW_DETAILED_ERRORS`: Show detailed error messages in API responses
   - Set to `"true"` for development, `"false"` (default) for production
   - When disabled, generic error messages are returned to prevent information disclosure
+- `CORS_ALLOW_ORIGINS`: Comma-separated list of allowed origins for CORS
+  - Example: `"https://terminal.example.com,https://preview.example.com"`
+  - Use `"*"` only for local/dev scenarios
 - `API_VERSION`: Override the API version string
   - If not set, version is determined from build-time VERSION file or git tags
   - Falls back to `"1.0.0"` if no version source is available
 
-## 📊 Database Schema
+## 📊 Database Notes
 
-The application uses a simple schema:
+PostgreSQL is deployed and available, but command history is currently not persisted by the backend.
 
-```sql
-CREATE TABLE command_history (
-    id SERIAL PRIMARY KEY,
-    command VARCHAR(500) NOT NULL,
-    output TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
+- Frontend command history is stored in browser `localStorage`
+- Backend keeps database utilities (`database.py`) for potential future persistence features
 
 ## 🔒 Security Notes
 
 - The terminal executes commands in a sandboxed environment
 - Only safe, predefined commands are executed
-- Database credentials are stored in Kubernetes secrets
+- Database credentials are configured via `DATABASE_URL` environment variable (in current manifests this is set directly; prefer Kubernetes Secrets for production)
 - In production, consider:
   - Using proper secrets management (e.g., Sealed Secrets, External Secrets Operator)
   - Implementing authentication/authorization
